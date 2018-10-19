@@ -22,5 +22,9 @@
     "express": "^4.16.3",
     "pm2": "^3.2.2",
     "wickrio_addon": "^4.54.23"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WickrInc/wickrio_web_interface"
   }
 }
