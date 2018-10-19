@@ -45,25 +45,6 @@ process.on('uncaughtException', exitHandler.bind(null, {
   exit: true
 }));
 
-memwatch.on('leak', function(info) {
-  console.log("LEAKKKKKK:", info);
-  fs.writeFile('leak.output', info, function(err) {
-    if (err) {
-      console.error(err);
-    }
-  });
-
-});
-memwatch.on('stats', function(stats) {
-  console.log("Heap Usage:", stats);
-  fs.writeFile('heap.output', stats, function(err) {
-    if (err) {
-      console.error(err);
-    }
-
-  });
-});
-
 var bot_username, bot_port, bot_api_key, bot_api_auth_token, ssl_key_location, ssl_crt_location;
 
 return new Promise((resolve, reject) => {
@@ -74,8 +55,6 @@ return new Promise((resolve, reject) => {
   bot_api_key = client[2].substring(client[2].indexOf('=') + 1, client[2].length);
   bot_api_auth_token = client[3].substring(client[3].indexOf('=') + 1, client[3].length);
   https_choice = client[4].substring(client[4].indexOf('=') + 1, client[4].length);
-  ssl_key_location = client[5].substring(client[5].indexOf('=') + 1, client[5].length);
-  ssl_crt_location = client[6].substring(client[6].indexOf('=') + 1, client[6].length);
 
   if (process.argv[2] === undefined) {
     var response = addon.clientInit(bot_username);
@@ -89,6 +68,8 @@ return new Promise((resolve, reject) => {
   app.use(bodyParser.json());
 
   if (https_choice === 'yes' || https_choice === 'y') {
+    ssl_key_location = client[5].substring(client[5].indexOf('=') + 1, client[5].length);
+    ssl_crt_location = client[6].substring(client[6].indexOf('=') + 1, client[6].length);
     const credentials = {
       key: fs.readFileSync(ssl_key_location, 'utf8'),
       cert: fs.readFileSync(ssl_crt_location, 'utf8')
@@ -174,7 +155,6 @@ return new Promise((resolve, reject) => {
       if (req.body.bor)
         bor = req.body.bor.toString();
       if (req.body.users) {
-        // var users = req.body.users;
         var users = [];
         for (var i in req.body.users) {
           users.push(req.body.users[i].name);
@@ -194,8 +174,6 @@ return new Promise((resolve, reject) => {
               displayName = req.body.attachment.displayname;
             attachment = req.body.attachment.filename;
           }
-          // console.log('users:', users);
-          // console.log('attachment:', attachment);
           console.log('displayName:', displayName);
           try {
             var s1t1a = addon.cmdSend1to1Attachment(users, attachment, displayName, ttl, bor);
@@ -878,59 +856,6 @@ return new Promise((resolve, reject) => {
     return res.type('txt').status(404).send('Endpoint ' + req.url + ' not found');
   });
 
-  /////////////////////////////////////////////////////////
-  //////////////////////////Testing///////////////////////
-  ////////////////////////////////////////////////////////
-  var rooms = endpoint + "/Rooms";
-  var statistics = endpoint + "/Statistics";
-  var messages = endpoint + "/Messages";
-  var groupconvos = endpoint + "/GroupConvo";
-  var msgcallback = endpoint + "/MsgRecvCallback";
-
-  request(app)
-    .get(rooms)
-    .set('Accept', 'application/json')
-    .set('Authorization', 'Basic d2lja3IyNTQ=')
-    .expect('Content-Type', 'application/json; charset=utf-8')
-    .expect(200)
-    .end(function(err, res) {
-      console.log('ressss:', res)
-      if (err) throw err;
-    });
-
-
-  request(app)
-    .get(statistics)
-    .set('Accept', 'application/json')
-    .set('Authorization', 'Basic d2lja3IyNTQ=')
-    .expect('Content-Type', 'application/json; charset=utf-8')
-    .expect(200)
-    .end(function(err, res) {
-      console.log('ressss:', res)
-      if (err) throw err;
-    });
-
-  request(app)
-    .get(messages)
-    .set('Accept', 'application/json')
-    .set('Authorization', 'Basic d2lja3IyNTQ=')
-    .expect('Content-Type', 'application/json; charset=utf-8')
-    .expect(200)
-    .end(function(err, res) {
-      console.log('ressss:', res)
-      if (err) throw err;
-    });
-
-  request(app)
-    .get(groupconvos)
-    .set('Accept', 'application/json')
-    .set('Authorization', 'Basic d2lja3IyNTQ=')
-    .expect('Content-Type', 'application/json; charset=utf-8')
-    .expect(200)
-    .end(function(err, res) {
-      console.log('ressss:', res)
-      if (err) throw err;
-    });
 }).catch(error => {
   console.log('Error: ', error);
 });
