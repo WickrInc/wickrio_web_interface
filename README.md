@@ -3,7 +3,7 @@
 Get started with the WickrIO Web API Interface:
 
 ## Configuration:
-* Must have a config file named client_bot_info.txt containing the following tokens and variables:
+* Run configure.sh and it will walk you through entering the following tokens and variables:
 1. BOT_USERNAME=*same one you input when setting up the client bot*
 2. BOT_PORT=*same one you input when setting up the client bot*
 3. BOT_API_KEY=*same one you input when setting up the client bot*
