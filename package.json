@@ -1,0 +1,25 @@
+{
+  "name": "wickrio_web_api",
+  "version": "1.0.0",
+  "description": "WickrIO Node.JS API Web Interface",
+  "main": "server.js",
+  "scripts": {
+    "start": "pm2 start server.js",
+    "stop": "pm2 delete server.js"
+  },
+  "keywords": [
+    "Wickr",
+    "API",
+    "web",
+    "interface",
+    "javascript",
+    "node"
+  ],
+  "author": "Aaron Mishiyev",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.3",
+    "wickrio_addon": "^4.54.23"
+  }
+}
