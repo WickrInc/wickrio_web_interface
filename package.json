@@ -1,6 +1,6 @@
 {
   "name": "wickrio_web_interface",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "WickrIO Node.JS API Web Interface",
   "main": "web_interface.js",
   "scripts": {
