@@ -18,13 +18,13 @@ if [ -z "$CLIENT_NAME" ]; then
     read  input
     if [ ! -z "$input" ]
     then
-       echo ${input} >client_bot_info.txt
+       echo 'BOT_USERNAME='${input} >client_bot_info.txt
     else
       echo "Cannot leave client bot's username empty! Please enter a value:"
     fi
   done
 else
-   echo $CLIENT_NAME >client_bot_info.txt
+   echo 'BOT_USERNAME='$CLIENT_NAME >client_bot_info.txt
 fi
 
 if [ -z "$LISTEN_PORT" ]; then

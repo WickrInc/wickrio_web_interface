@@ -1,9 +1,11 @@
 const express = require('express');
 const https = require('https');
 const bodyParser = require('body-parser');
+const helmet = require('helmet');
 const addon = require('wickrio_addon');
 const fs = require('fs');
 const app = express();
+app.use(helmet());  //security http headers
 
 process.title = "wickrioWebApi";
 process.stdin.resume(); //so the program will not close instantly
@@ -45,10 +47,10 @@ process.on('uncaughtException', exitHandler.bind(null, {
   exit: true
 }));
 
-var bot_username, bot_port, bot_api_key, bot_api_auth_token, ssl_key_location, ssl_crt_location;
+var client, bot_username, bot_port, bot_api_key, bot_api_auth_token, ssl_key_location, ssl_crt_location;
 
 return new Promise((resolve, reject) => {
-  var client = fs.readFileSync('client_bot_info.txt', 'utf-8');
+  client = fs.readFileSync('client_bot_info.txt', 'utf-8');
   client = client.split('\n');
   bot_username = client[0].substring(client[0].indexOf('=') + 1, client[0].length);
   bot_port = client[1].substring(client[1].indexOf('=') + 1, client[1].length);
@@ -118,7 +120,7 @@ return new Promise((resolve, reject) => {
 
   });
 
-  var endpoint = "/WickrIO/v1/Apps/" + bot_api_key;
+  var endpoint = "/WickrIO/V1/Apps/" + bot_api_key;
 
   app.post(endpoint + "/Messages", function(req, res) {
     res.set('Content-Type', 'text/plain');
