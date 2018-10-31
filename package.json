@@ -1,6 +1,6 @@
 {
   "name": "wickrio_web_interface",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "WickrIO Node.JS API Web Interface",
   "main": "web_interface.js",
   "scripts": {
@@ -22,7 +22,7 @@
     "express": "^4.16.3",
     "helmet": "^3.14.0",
     "pm2": "^3.2.2",
-    "wickrio_addon": "^4.62.2"
+    "wickrio_addon": "^4.62.7"
   },
   "repository": {
     "type": "git",

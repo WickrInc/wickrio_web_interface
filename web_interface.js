@@ -5,7 +5,7 @@ const helmet = require('helmet');
 const addon = require('wickrio_addon');
 const fs = require('fs');
 const app = express();
-app.use(helmet());  //security http headers
+app.use(helmet()); //security http headers
 
 process.title = "wickrioWebApi";
 process.stdin.resume(); //so the program will not close instantly
@@ -57,13 +57,16 @@ return new Promise((resolve, reject) => {
   bot_api_key = client[2].substring(client[2].indexOf('=') + 1, client[2].length);
   bot_api_auth_token = client[3].substring(client[3].indexOf('=') + 1, client[3].length);
   https_choice = client[4].substring(client[4].indexOf('=') + 1, client[4].length);
-
-  if (process.argv[2] === undefined) {
-    var response = addon.clientInit(bot_username);
-    resolve(response);
-  } else {
-    var response = addon.clientInit(process.argv[2]);
-    resolve(response);
+  try {
+    if (process.argv[2] === undefined) {
+      var response = addon.clientInit(bot_username);
+      resolve(response);
+    } else {
+      var response = addon.clientInit(process.argv[2]);
+      resolve(response);
+    }
+  } catch (err) {
+    return console.log(err);
   }
 }).then(result => {
   console.log(result);
@@ -108,16 +111,8 @@ return new Promise((resolve, reject) => {
     return str;
   }
 
-  // log info about ALL requests to ALL paths
   app.all('*', function(req, res, next) {
-
-    console.log('*** A request ***');
-    console.log('method: ' + req.method);
-    console.log('url: ' + req.url);
-    console.log('*****************');
-
     next();
-
   });
 
   var endpoint = "/WickrIO/V1/Apps/" + bot_api_key;
@@ -125,8 +120,6 @@ return new Promise((resolve, reject) => {
   app.post(endpoint + "/Messages", function(req, res) {
     res.set('Content-Type', 'text/plain');
     res.set('Authorization', 'Basic base64_auth_token');
-    console.log('req.body:', req.body);
-    console.log('req.headers:', req.headers);
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -179,7 +172,6 @@ return new Promise((resolve, reject) => {
           console.log('displayName:', displayName);
           try {
             var s1t1a = addon.cmdSend1to1Attachment(users, attachment, displayName, ttl, bor);
-            console.log('201:', s1t1a);
             res.send(s1t1a);
           } catch (err) {
             console.log(err);
@@ -188,8 +180,6 @@ return new Promise((resolve, reject) => {
           }
         } else {
           var message = req.body.message;
-          console.log("send1to1Message");
-          console.log(users, message, ttl, bor);
           try {
             var csm = addon.cmdSend1to1Message(users, message, ttl, bor);
             console.log(csm);
