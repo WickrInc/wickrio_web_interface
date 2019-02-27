@@ -1,9 +1,11 @@
 # WickrIO API Web Interface
 
-Get started with the WickrIO Web API Interface:
+The official WickrIO Web API tool. Allows to send HTTP requests to communicate with the WickrIO API, and also makes it possible to create Wickr Integrations using any programming language.
+
+To get started with the WickrIO Web API Interface:
 
 ## Configuration:
-* After installing the Web API Interface software module, you will need to configure several properties that are needed to access the URL endpoints. The WickrIO console will walk you through entering the following values:
+Run configure.sh after installing the Web API Interface software module, it will propmpt you to configure several properties that are needed to access the URL endpoints. The WickrIO console will walk you through entering the following values:
 1. BOT_USERNAME = This is the username of the WickrIO client. If prompted enter that value.
 2. BOT_PORT = The network port the app is going to be listening on
 3. BOT_API_KEY = Custom API Key which will be used in every endpoint call, is the <API Key> from table above.
