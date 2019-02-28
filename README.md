@@ -18,4 +18,4 @@ For HTTPS and SSL support, you need an OpenSSL certificate file and a key file. 
 `` openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout my.key -out my.cert ``
 
 ## Usage:
-* All of the endpoints and requirements are listed in WickrIO_Client_REST_API.doc
+* All of the endpoints and requirements are listed in here: https://wickrinc.github.io/wickrio-docs/#web-interface-rest-api
