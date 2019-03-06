@@ -22,7 +22,7 @@
     "express": "^4.16.4",
     "helmet": "^3.15.1",
     "pm2": "^3.3.1",
-    "wickrio_addon": "^5.6.2"
+    "wickrio_addon": "^5.8.2"
   },
   "repository": {
     "type": "git",
