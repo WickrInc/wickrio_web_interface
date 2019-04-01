@@ -6,7 +6,6 @@
 #
 if [ -n "$1" ]; then
   if [ -f "$1" ]; then
-    echo going to use $1
     . "$1"
   fi
 fi
