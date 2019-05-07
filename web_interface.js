@@ -70,7 +70,6 @@ return new Promise((resolve, reject) => {
   }
 }).then(result => {
   console.log(result);
-  app.use(bodyParser.json());
 
   if (https_choice === 'yes' || https_choice === 'y') {
     ssl_key_location = client[5].substring(client[5].indexOf('=') + 1, client[5].length);
@@ -110,6 +109,23 @@ return new Promise((resolve, reject) => {
     }
     return str;
   }
+
+  // parse application/x-www-form-urlencoded
+  app.use(bodyParser.urlencoded({
+    extended: false
+  }));
+  // parse application/json
+  app.use(bodyParser.json());
+
+  app.use(function(error, req, res, next) {
+    if (error instanceof SyntaxError) {
+      console.log('bodyParser:', error);
+      res.statusCode = 400;
+      res.type('txt').send(error.toString());
+    } else {
+      next();
+    }
+  });
 
   app.all('*', function(req, res, next) {
     next();
