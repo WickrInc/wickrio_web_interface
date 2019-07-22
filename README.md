@@ -4,6 +4,8 @@ The official WickrIO Web API tool. Allows to send HTTP requests to communicate w
 
 To get started with the WickrIO Web API Interface:
 
+First, you would need to setup your system, download and install Docker and run the WickrIO Docker container. Full instructions on how to do so are available here: https://wickrinc.github.io/wickrio-docs/#wickr-io-getting-started
+
 ## Configuration:
 Run configure.sh after installing the Web API Interface software module, it will propmpt you to configure several properties that are needed to access the URL endpoints. The WickrIO console will walk you through entering the following values:
 1. BOT_USERNAME = This is the username of the WickrIO client. If prompted enter that value.
@@ -57,6 +59,7 @@ Create Group Conversation | POST | https://\<host\>:\<port\>/WickrIO/V1/Apps/\<A
 Get Group Conversations | GET | https://\<host\>:\<port\>/WickrIO/V1/Apps/\<API Key\>/GroupConvo
 Get Group Conversation | GET | https://\<host\>:\<port\>/WickrIO/V1/Apps/\<API Key\>/GroupConvo /\<vGroupID\>
 Delete Group Conversation | DELETE | https://\<host\>:\<port\>/WickrIO/V1/Apps/\<API Key\>/GroupConvo/\<vGroupID\>
+Get Directory | GET | https://\<host\>:\<port\>/WickrIO/V1/Apps/\<API Key\>/Directory
 
 The \<API Key\> value is the value you entered during the configuration of the Wickr Web Interface intagration.
 
