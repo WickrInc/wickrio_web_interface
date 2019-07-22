@@ -1,12 +1,12 @@
 {
   "name": "wickrio_web_interface",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "WickrIO Node.JS API Web Interface",
   "main": "web_interface.js",
   "scripts": {
-    "start": "pm2 start web_interface.js",
-    "stop": "pm2 delete web_interface.js"
-  },
+    "start": "pm2 start processes.json --update-env",
+    "stop": "pm2 delete processes.json"
+    },
   "keywords": [
     "Wickr",
     "API",
@@ -19,10 +19,10 @@
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.19.0",
-    "express": "^4.16.4",
-    "helmet": "^3.18.0",
-    "pm2": "^3.5.0",
-    "wickrio_addon": "^5.18.9"
+    "express": "^4.17.1",
+    "helmet": "^3.19.0",
+    "pm2": "^3.5.1",
+    "wickrio_addon": "^5.28.2"
   },
   "repository": {
     "type": "git",

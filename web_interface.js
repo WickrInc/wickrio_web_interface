@@ -30,24 +30,22 @@ function exitHandler(options, err) {
 }
 
 //catches ctrl+c and stop.sh events
-process.on('SIGINT', exitHandler.bind(null, {
-  exit: true
-}));
+process.on('SIGINT', exitHandler.bind(null, {exit: true}));
 
 // catches "kill pid" (for example: nodemon restart)
-process.on('SIGUSR1', exitHandler.bind(null, {
-  pid: true
-}));
-process.on('SIGUSR2', exitHandler.bind(null, {
-  pid: true
-}));
+process.on('SIGUSR1', exitHandler.bind(null, {pid: true}));
+process.on('SIGUSR2', exitHandler.bind(null, {pid: true}));
 
 //catches uncaught exceptions
-process.on('uncaughtException', exitHandler.bind(null, {
-  exit: true
-}));
+process.on('uncaughtException', exitHandler.bind(null, {exit: true}));
 
-var client, bot_username, bot_port, bot_api_key, bot_api_auth_token, ssl_key_location, ssl_crt_location;
+var client,
+  bot_username,
+  bot_port,
+  bot_api_key,
+  bot_api_auth_token,
+  ssl_key_location,
+  ssl_crt_location;
 
 return new Promise((resolve, reject) => {
   client = fs.readFileSync('client_bot_info.txt', 'utf-8');
@@ -111,9 +109,7 @@ return new Promise((resolve, reject) => {
   }
 
   // parse application/x-www-form-urlencoded
-  app.use(bodyParser.urlencoded({
-    extended: false
-  }));
+  app.use(bodyParser.urlencoded({extended: false}));
   // parse application/json
   app.use(bodyParser.json());
 
@@ -250,10 +246,7 @@ return new Promise((resolve, reject) => {
     }
   });
 
-
   app.get(endpoint + "/Statistics", function(req, res) {
-    console.log('req.body:', req.body);
-    console.log('req.headers:', req.headers);
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -294,11 +287,8 @@ return new Promise((resolve, reject) => {
     }
   });
 
-
   app.delete(endpoint + "/Statistics", function(req, res) {
     res.set('Content-Type', 'text/plain');
-    console.log('req.body:', req.body);
-    console.log('req.headers:', req.headers);
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -329,8 +319,6 @@ return new Promise((resolve, reject) => {
   });
 
   app.post(endpoint + "/Rooms", function(req, res) {
-    console.log('req.body:', req.body);
-    console.log('req.headers:', req.headers);
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -384,8 +372,6 @@ return new Promise((resolve, reject) => {
   });
 
   app.get(endpoint + "/Rooms/:vGroupID", function(req, res) {
-    console.log('req.body:', req.body);
-    console.log('req.headers:', req.headers);
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -407,7 +393,6 @@ return new Promise((resolve, reject) => {
       var vGroupID = req.params.vGroupID;
       try {
         var cgr = addon.cmdGetRoom(vGroupID);
-        console.log(cgr);
         res.send(cgr);
       } catch (err) {
         console.log(err);
@@ -418,8 +403,6 @@ return new Promise((resolve, reject) => {
   });
 
   app.get(endpoint + "/Rooms", function(req, res) {
-    console.log('req.body:', req.body);
-    console.log('req.headers:', req.headers);
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -439,7 +422,6 @@ return new Promise((resolve, reject) => {
     } else {
       try {
         var cgr = addon.cmdGetRooms();
-        console.log(cgr);
         res.type('json').send(cgr);
       } catch (err) {
         console.log(err);
@@ -452,8 +434,6 @@ return new Promise((resolve, reject) => {
   app.delete(endpoint + "/Rooms/:vGroupID", function(req, res) {
     res.set('Content-Type', 'text/plain');
     res.set('Authorization', 'Basic base64_auth_token');
-    console.log('req.body:', req.body);
-    console.log('req.headers:', req.headers);
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -500,8 +480,6 @@ return new Promise((resolve, reject) => {
   app.post(endpoint + "/Rooms/:vGroupID", function(req, res) {
     res.set('Content-Type', 'text/plain');
     res.set('Authorization', 'Basic base64_auth_token');
-    console.log('req.body:', req.body);
-    console.log('req.headers:', req.headers);
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -557,8 +535,6 @@ return new Promise((resolve, reject) => {
   });
 
   app.post(endpoint + "/GroupConvo", function(req, res) {
-    console.log('req.body:', req.body);
-    console.log('req.headers:', req.headers);
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -601,10 +577,7 @@ return new Promise((resolve, reject) => {
     }
   });
 
-
   app.get(endpoint + "/GroupConvo", function(req, res) {
-    console.log('req.body:', req.body);
-    console.log('req.headers:', req.headers);
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -624,7 +597,6 @@ return new Promise((resolve, reject) => {
     } else {
       try {
         var cggc = addon.cmdGetGroupConvos();
-        console.log(cggc);
         res.type('json').send(cggc);
       } catch (err) {
         console.log(err);
@@ -634,10 +606,7 @@ return new Promise((resolve, reject) => {
     }
   });
 
-
   app.get(endpoint + "/GroupConvo/:vGroupID", function(req, res) {
-    console.log('req.body:', req.body);
-    console.log('req.headers:', req.headers);
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -658,7 +627,6 @@ return new Promise((resolve, reject) => {
       var vGroupID = req.params.vGroupID;
       try {
         var cggc = addon.cmdGetGroupConvo(vGroupID);
-        console.log(cggc);
         res.type('json').send(cggc);
       } catch (err) {
         console.log(err);
@@ -668,12 +636,9 @@ return new Promise((resolve, reject) => {
     }
   });
 
-
   app.delete(endpoint + "/GroupConvo/:vGroupID", function(req, res) {
     res.set('Content-Type', 'text/plain');
     res.set('Authorization', 'Basic base64_auth_token');
-    console.log('req.body:', req.body);
-    console.log('req.headers:', req.headers);
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -704,11 +669,8 @@ return new Promise((resolve, reject) => {
     }
   });
 
-
   app.get(endpoint + "/Messages", async function(req, res) {
     res.set('Authorization', 'Basic base64_auth_token');
-    console.log('req.body:', req.body);
-    console.log('req.headers:', req.headers);
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -753,10 +715,7 @@ return new Promise((resolve, reject) => {
     }
   });
 
-
   app.post(endpoint + "/MsgRecvCallback", function(req, res) {
-    console.log('req.body:', req.body);
-    console.log('req.headers:', req.headers);
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -788,10 +747,7 @@ return new Promise((resolve, reject) => {
     }
   });
 
-
   app.get(endpoint + "/MsgRecvCallback", function(req, res) {
-    console.log('req.body:', req.body);
-    console.log('req.headers:', req.headers);
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -811,7 +767,6 @@ return new Promise((resolve, reject) => {
     } else {
       try {
         var cgmc = addon.cmdGetMsgCallback();
-        console.log(cgmc);
         res.type('txt').send(cgmc);
       } catch (err) {
         console.log(err);
@@ -821,10 +776,7 @@ return new Promise((resolve, reject) => {
     }
   });
 
-
   app.delete(endpoint + "/MsgRecvCallback", function(req, res) {
-    console.log('req.body:', req.body);
-    console.log('req.headers:', req.headers);
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -854,6 +806,34 @@ return new Promise((resolve, reject) => {
     }
   });
 
+  app.get(endpoint + "/Directory", function(req, res) {
+    var authHeader = req.get('Authorization');
+    var authToken;
+    if (authHeader) {
+      if (authHeader.indexOf(' ') == -1) {
+        authToken = authHeader;
+      } else {
+        authHeader = authHeader.split(' ');
+        authToken = authHeader[1];
+      }
+    } else {
+      res.set('Authorization', 'Basic base64_auth_token');
+      return res.type('txt').status(401).send('Access denied: invalid Authorization Header format. Correct format: "Authorization: Basic base64_auth_token"');
+    }
+    if (!checkCreds(authToken)) {
+      res.set('Authorization', 'Basic base64_auth_token');
+      return res.type('txt').status(401).send('Access denied: invalid basic-auth token.');
+    } else {
+      try {
+        var cgd = addon.cmdGetDirectory();
+        res.type('txt').send(cgd);
+      } catch (err) {
+        console.log(err);
+        res.statusCode = 400;
+        res.type('txt').send(err.toString());
+      }
+    }
+  });
 
   // What to do for ALL requests for ALL Paths
   // that are not handled above
