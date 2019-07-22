@@ -826,7 +826,7 @@ return new Promise((resolve, reject) => {
     } else {
       try {
         var cgd = addon.cmdGetDirectory();
-        res.type('txt').send(cgd);
+        res.type('json').send(cgd);
       } catch (err) {
         console.log(err);
         res.statusCode = 400;
