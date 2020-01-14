@@ -50,8 +50,6 @@ async function main() {
         var newName = "WickrIO-Web-Interface";
       }
 
-      console.log(newName);
-
       //var assign = Object.assign(dataParsed.apps[0].name, newName);
       dataParsed.apps[0].name = newName;
 
