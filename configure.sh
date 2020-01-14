@@ -118,13 +118,13 @@ if [ "$HTTPS_CHOICE" -o "$input5" = 'y' ]; then
     read  input7
     if [ ! -z "$input7" ]
      then
-      echo 'SSL_KEY_LOCATION='${input7} >>client_bot_info.txt
+      echo 'SSL_CRT_LOCATION='${input7} >>client_bot_info.txt
      else
        echo "Cannot leave ssl certificate file location empty! Please enter a value:"
     fi
   done
 else
-  echo 'SSL_KEY_LOCATION='${SSL_KEY_LOCATION} >>client_bot_info.txt
+  echo 'SSL_CRT_LOCATION='${SSL_CRT_LOCATION} >>client_bot_info.txt
 fi
 fi
 
