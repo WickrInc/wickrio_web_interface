@@ -10,6 +10,33 @@ if [ -n "$1" ]; then
   fi
 fi
 
+#
+# if the client config file exists ask the user if that should be used
+#
+if [ -e client_bot_info.txt ]; then
+  echo "prompt: Config values exists, should they be used (y/n)?:"
+  while [ -z "$input" ]
+  do
+    read  input
+    if [ "$input" = "y" ]
+    then
+      echo "Values from the current config will be used!"
+      . ./client_bot_info.txt
+
+      CLIENT_NAME=$BOT_USERNAME
+      LISTEN_PORT=$BOT_PORT
+      API_KEY=$BOT_API_KEY
+      API_AUTH_TOKEN=$BOT_API_AUTH_TOKEN
+      HTTPS_CHOICE=$HTTPS_CHOICE
+      SSL_KEY_LOCATION=$SSL_KEY_LOCATION
+      SSL_CRT_LOCATION=$SSL_CRT_LOCATION
+    else
+      echo "Values from the current config will be ignored!"
+    fi
+  done
+  input=""
+fi
+
 if [ -z "$CLIENT_NAME" ]; then
   echo "prompt: Please enter your client bot's username:"
   while [ -z "$input" ]
@@ -84,6 +111,7 @@ if [ -z "$HTTPS_CHOICE" ]; then
     if [ ! -z "$input5" ]
      then
       echo 'HTTPS_CHOICE='${input5} >>client_bot_info.txt
+      HTTPS_CHOICE=$input5
      else
        echo "Cannot leave choice empty! Please enter a value:"
     fi
@@ -93,7 +121,7 @@ else
 fi
 
 if [ -z "$SSL_KEY_LOCATION" ]; then
-if [ "$HTTPS_CHOICE" -o "$input5" = 'y' ]; then
+if [ "$HTTPS_CHOICE" = "y" ]; then
  echo "prompt: Please enter the name and location of your SSL .key file:"
   while [ -z "$input6" ]
    do
@@ -111,7 +139,7 @@ fi
 fi
 
 if [ -z "$SSL_CRT_LOCATION" ]; then
-if [ "$HTTPS_CHOICE" -o "$input5" = 'y' ]; then
+if [ "$HTTPS_CHOICE" = "y" ]; then
  echo "prompt: Please enter the name and location of your SSL .crt file:"
   while [ -z "$input7" ]
    do
