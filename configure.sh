@@ -33,7 +33,7 @@ if [ -f client_bot_info.txt ]; then
 fi
 
 if [ -z "$CLIENT_NAME" ]; then
-  echo "prompt: Please enter your client bot's username:"
+  echo "prompt:Please enter your client bot's username:"
   while [ -z "$input" ]
   do
     read  input
@@ -42,7 +42,8 @@ if [ -z "$CLIENT_NAME" ]; then
        echo 'BOT_USERNAME='${input} >client_bot_info.txt
        BOT_NAME=${input}
     else
-      echo "Cannot leave client bot's username empty! Please enter a value:"
+      echo "Cannot leave client bot's username empty!"
+      echo "prompt:Please enter a value:"
     fi
   done
 else
@@ -54,9 +55,9 @@ fi
 # Process the LISTEN_PORT value, saved as BOT_PORT
 #
 if [ -z "$LISTEN_PORT" ]; then
-  echo "prompt: Please enter your client bot's port:"
+  echo "prompt:Please enter your client bot's port:"
 else
-  echo "prompt: Please enter your client bot's port (default ${LISTEN_PORT}):"
+  echo "prompt:Please enter your client bot's port (default ${LISTEN_PORT}):"
 fi
 
 while [ -z "$botportinput" ]
@@ -69,7 +70,8 @@ do
     echo 'BOT_PORT='${LISTEN_PORT} >>client_bot_info.txt
     botportinput=$LISTEN_PORT
   else
-    echo "Cannot leave client bot's port empty! Please enter a value:"
+    echo "Cannot leave client bot's port empty!"
+    echo "prompt:Please enter a value:"
   fi
 done
 
@@ -78,9 +80,9 @@ done
 # Process the API_KEY value, saved as BOT_API_KEY
 #
 if [ -z "$API_KEY" ]; then
-  echo "prompt: Please enter your client bot's API-Key:"
+  echo "prompt:Please enter your client bot's API-Key:"
 else
-  echo "prompt: Please enter your client bot's API-Key (default ${API_KEY}):"
+  echo "prompt:Please enter your client bot's API-Key (default ${API_KEY}):"
 fi
 
 while [ -z "$apikeyinput" ]
@@ -93,7 +95,8 @@ do
     echo 'BOT_API_KEY='${API_KEY} >>client_bot_info.txt
     apikeyinput=$API_KEY
   else
-    echo "Cannot leave client bot's API-Key empty! Please enter a value:"
+    echo "Cannot leave client bot's API-Key empty!"
+    echo "prompt:Please enter a value:"
   fi
 done
 
@@ -101,9 +104,9 @@ done
 # Process the API_AUTH_TOKEN value, saved as BOT_API_AUTH_TOKEN
 #
 if [ -z "$API_AUTH_TOKEN" ]; then
-  echo "prompt: Please create an Web API Basic Authorization Token, we recommend an alphanumeric string with at least 24 characters:"
+  echo "prompt:Please create an Web API Basic Authorization Token, we recommend an alphanumeric string with at least 24 characters:"
 else
-  echo "prompt: Please create an Web API Basic Authorization Token, we recommend an alphanumeric string with at least 24 characters (default ${API_AUTH_TOKEN}):"
+  echo "prompt:Please create an Web API Basic Authorization Token, we recommend an alphanumeric string with at least 24 characters (default ${API_AUTH_TOKEN}):"
 fi
 
 while [ -z "$authtokeninput" ]
@@ -116,7 +119,8 @@ do
     echo 'BOT_API_AUTH_TOKEN='${API_AUTH_TOKEN} >>client_bot_info.txt
     authtokeninput=$API_AUTH_TOKEN
   else
-     echo "Cannot leave Basic Authorization Token empty! Please enter a value:"
+    echo "Cannot leave Basic Authorization Token empty!"
+    echo "prompt:Please enter a value:"
   fi
 done
 
@@ -124,9 +128,9 @@ done
 # Process the HTTPS_CHOICE value, saved as HTTPS_CHOICE
 #
 if [ -z "$HTTPS_CHOICE" ]; then
-  echo "prompt: Do you want to set up an HTTPS connection with the Web API Interface, highly recommended [y/n]:"
+  echo "prompt:Do you want to set up an HTTPS connection with the Web API Interface, highly recommended [y/n]:"
 else
-  echo "prompt: Do you want to set up an HTTPS connection with the Web API Interface, highly recommended [y/n] (default ${HTTPS_CHOICE}):"
+  echo "prompt:Do you want to set up an HTTPS connection with the Web API Interface, highly recommended [y/n] (default ${HTTPS_CHOICE}):"
 fi
 
 while [ -z "$httpschoiceinput" ]
@@ -146,7 +150,8 @@ do
     echo 'HTTPS_CHOICE='${HTTPS_CHOICE} >>client_bot_info.txt
     httpschoiceinput=$HTTPS_CHOICE
   else
-    echo "Cannot leave choice empty! Please enter a value:"
+    echo "Cannot leave the HTTPS connection choice empty!"
+    echo "prompt:Please enter a value:"
   fi
 done
 
@@ -155,9 +160,9 @@ done
 #
 if [ "$HTTPS_CHOICE" -a "$httpschoiceinput" = 'y' ]; then
   if [ -z "$SSL_KEY_LOCATION" ]; then
-    echo "prompt: Please enter the name and location of your SSL .key file:"
+    echo "prompt:Please enter the name and location of your SSL .key file:"
   else
-    echo "prompt: Please enter the name and location of your SSL .key file (default ${SSL_KEY_LOCATION}):"
+    echo "prompt:Please enter the name and location of your SSL .key file (default ${SSL_KEY_LOCATION}):"
   fi
 
   while [ -z "$sslkeylocationinput" ]
@@ -170,7 +175,8 @@ if [ "$HTTPS_CHOICE" -a "$httpschoiceinput" = 'y' ]; then
       echo 'SSL_KEY_LOCATION='${SSL_KEY_LOCATION} >>client_bot_info.txt
       sslkeylocationinput=$SSL_KEY_LOCATION
     else
-      echo "Cannot leave SSL key file location empty! Please enter a value:"
+      echo "Cannot leave SSL key file location empty!"
+      echo "prompt:Please enter a value:"
     fi
   done
 else
@@ -183,9 +189,9 @@ fi
 #
 if [ "$HTTPS_CHOICE" -a "$httpschoiceinput" = 'y' ]; then
   if [ -z "$SSL_CRT_LOCATION" ]; then
-    echo "prompt: Please enter the name and location of your SSL .crt file:"
+    echo "prompt:Please enter the name and location of your SSL .crt file:"
   else
-    echo "prompt: Please enter the name and location of your SSL .crt file (default ${SSL_CRT_LOCATION}):"
+    echo "prompt:Please enter the name and location of your SSL .crt file (default ${SSL_CRT_LOCATION}):"
   fi
 
   while [ -z "$sslcrtlocationinput" ]
@@ -198,7 +204,8 @@ if [ "$HTTPS_CHOICE" -a "$httpschoiceinput" = 'y' ]; then
       echo 'SSL_CRT_LOCATION='${SSL_CRT_LOCATION} >>client_bot_info.txt
       sslcrtlocationinput=$SSL_CRT_LOCATION
     else
-      echo "Cannot leave SSL certificate file location empty! Please enter a value:"
+      echo "Cannot leave SSL certificate file location empty!"
+      echo "prompt:Please enter a value:"
     fi
   done
 else
