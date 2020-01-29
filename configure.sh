@@ -10,6 +10,28 @@ if [ -n "$1" ]; then
   fi
 fi
 
+#
+# If the client_bot_info.txt file exists then get those values into environment variables
+#
+if [ -f client_bot_info.txt ]; then
+  . ./client_bot_info.txt
+
+  if [ -n "$BOT_USERNAME" ]; then
+    if [ -z "$CLIENT_NAME" ]; then
+      CLIENT_NAME=$BOT_USERNAME
+    fi
+  fi
+  if [ -n "$BOT_PORT" ]; then
+    LISTEN_PORT=$BOT_PORT
+  fi
+  if [ -n "$BOT_API_KEY" ]; then
+    API_KEY=$BOT_API_KEY
+  fi
+  if [ -n "$BOT_API_AUTH_TOKEN" ]; then
+    API_AUTH_TOKEN=$BOT_API_AUTH_TOKEN
+  fi
+fi
+
 if [ -z "$CLIENT_NAME" ]; then
   echo "prompt: Please enter your client bot's username:"
   while [ -z "$input" ]
@@ -28,104 +50,159 @@ else
    BOT_NAME=$CLIENT_NAME
 fi
 
+#==============================================================================
+# Process the LISTEN_PORT value, saved as BOT_PORT
+#
 if [ -z "$LISTEN_PORT" ]; then
   echo "prompt: Please enter your client bot's port:"
-  while [ -z "$input2" ]
-  do
-    read  input2
-    if [ ! -z "$input2" ]
-    then
-      echo 'BOT_PORT='${input2} >>client_bot_info.txt
-    else
-      echo "Cannot leave client bot's port empty! Please enter a value:"
-    fi
-  done
 else
-  echo 'BOT_PORT='${LISTEN_PORT} >>client_bot_info.txt
+  echo "prompt: Please enter your client bot's port (default ${LISTEN_PORT}):"
 fi
 
+while [ -z "$botportinput" ]
+do
+  read  botportinput
+  if [ ! -z "$botportinput" ]
+  then
+    echo 'BOT_PORT='${botportinput} >>client_bot_info.txt
+  elif [ -n "$LISTEN_PORT" ]; then
+    echo 'BOT_PORT='${LISTEN_PORT} >>client_bot_info.txt
+    botportinput=$LISTEN_PORT
+  else
+    echo "Cannot leave client bot's port empty! Please enter a value:"
+  fi
+done
+
+
+#==============================================================================
+# Process the API_KEY value, saved as BOT_API_KEY
+#
 if [ -z "$API_KEY" ]; then
   echo "prompt: Please enter your client bot's API-Key:"
-  while [ -z "$input3" ]
-  do
-    read  input3
-    if [ ! -z "$input3" ]
-    then
-      echo 'BOT_API_KEY='${input3} >>client_bot_info.txt
-    else
-      echo "Cannot leave client bot's API-Key empty! Please enter a value:"
-    fi
-  done
 else
-  echo 'BOT_API_KEY='${API_KEY} >>client_bot_info.txt
+  echo "prompt: Please enter your client bot's API-Key (default ${API_KEY}):"
 fi
 
+while [ -z "$apikeyinput" ]
+do
+  read  apikeyinput
+  if [ ! -z "$apikeyinput" ]
+  then
+    echo 'BOT_API_KEY='${apikeyinput} >>client_bot_info.txt
+  elif [ -n "$API_KEY" ]; then
+    echo 'BOT_API_KEY='${API_KEY} >>client_bot_info.txt
+    apikeyinput=$API_KEY
+  else
+    echo "Cannot leave client bot's API-Key empty! Please enter a value:"
+  fi
+done
+
+#==============================================================================
+# Process the API_AUTH_TOKEN value, saved as BOT_API_AUTH_TOKEN
+#
 if [ -z "$API_AUTH_TOKEN" ]; then
- echo "prompt: Please create an Web API Basic Authorization Token(we recommend an alphanumeric string with at least 24 characters):"
-  while [ -z "$input4" ]
-   do
-    read  input4
-    if [ ! -z "$input4" ]
-     then
-      echo 'BOT_API_AUTH_TOKEN='${input4} >>client_bot_info.txt
-     else
-       echo "Cannot leave Basic Authorization Token empty! Please enter a value:"
-    fi
-  done
+  echo "prompt: Please create an Web API Basic Authorization Token, we recommend an alphanumeric string with at least 24 characters:"
 else
-  echo 'BOT_API_AUTH_TOKEN='${API_AUTH_TOKEN} >>client_bot_info.txt
+  echo "prompt: Please create an Web API Basic Authorization Token, we recommend an alphanumeric string with at least 24 characters (default ${API_AUTH_TOKEN}):"
 fi
 
+while [ -z "$authtokeninput" ]
+do
+  read  authtokeninput
+  if [ ! -z "$authtokeninput" ]
+  then
+    echo 'BOT_API_AUTH_TOKEN='${authtokeninput} >>client_bot_info.txt
+  elif [ -n "$API_AUTH_TOKEN" ]; then
+    echo 'BOT_API_AUTH_TOKEN='${API_AUTH_TOKEN} >>client_bot_info.txt
+    authtokeninput=$API_AUTH_TOKEN
+  else
+     echo "Cannot leave Basic Authorization Token empty! Please enter a value:"
+  fi
+done
+
+#==============================================================================
+# Process the HTTPS_CHOICE value, saved as HTTPS_CHOICE
+#
 if [ -z "$HTTPS_CHOICE" ]; then
- echo "prompt: Do you want to set up an HTTPS connection with the Web API Interface(Recommended)(y/n):"
-  while [ -z "$input5" ]
-   do
-    read  input5
-    if [ ! -z "$input5" ]
-     then
-      echo 'HTTPS_CHOICE='${input5} >>client_bot_info.txt
-     else
-       echo "Cannot leave choice empty! Please enter a value:"
-    fi
-  done
+  echo "prompt: Do you want to set up an HTTPS connection with the Web API Interface, highly recommended [y/n]:"
 else
-  echo 'HTTPS_CHOICE='${HTTPS_CHOICE} >>client_bot_info.txt
+  echo "prompt: Do you want to set up an HTTPS connection with the Web API Interface, highly recommended [y/n] (default ${HTTPS_CHOICE}):"
 fi
 
-if [ -z "$SSL_KEY_LOCATION" ]; then
-if [ "$HTTPS_CHOICE" -o "$input5" = 'y' ]; then
- echo "prompt: Please enter the name and location of your SSL .key file:"
-  while [ -z "$input6" ]
-   do
-    read  input6
-    if [ ! -z "$input6" ]
-     then
-      echo 'SSL_KEY_LOCATION='${input6} >>client_bot_info.txt
-     else
-       echo "Cannot leave ssl key file location empty! Please enter a value:"
+while [ -z "$httpschoiceinput" ]
+do
+  read  httpschoiceinput
+
+  if [ ! -z "$httpschoiceinput" ]
+  then
+    httpschoiceinput=`echo $httpschoiceinput | cut -c1-1` 
+    if [ "$httpschoiceinput" = 'y' -o "$httpschoiceinput" = 'n' ]; then
+      echo 'HTTPS_CHOICE='${httpschoiceinput} >>client_bot_info.txt
+    else
+      echo "prompt:Please enter either 'y' or 'n':"
+      httpschoiceinput=""
+    fi
+  elif [ -n "$HTTPS_CHOICE" ]; then
+    echo 'HTTPS_CHOICE='${HTTPS_CHOICE} >>client_bot_info.txt
+    httpschoiceinput=$HTTPS_CHOICE
+  else
+    echo "Cannot leave choice empty! Please enter a value:"
+  fi
+done
+
+#==============================================================================
+# Process the SSL_KEY_LOCATION value, saved as SSL_KEY_LOCATION
+#
+if [ "$HTTPS_CHOICE" -a "$httpschoiceinput" = 'y' ]; then
+  if [ -z "$SSL_KEY_LOCATION" ]; then
+    echo "prompt: Please enter the name and location of your SSL .key file:"
+  else
+    echo "prompt: Please enter the name and location of your SSL .key file (default ${SSL_KEY_LOCATION}):"
+  fi
+
+  while [ -z "$sslkeylocationinput" ]
+  do
+    read  sslkeylocationinput
+    if [ ! -z "$sslkeylocationinput" ]
+    then
+      echo 'SSL_KEY_LOCATION='${sslkeylocationinput} >>client_bot_info.txt
+    elif [ -n "$SSL_KEY_LOCATION" ]; then
+      echo 'SSL_KEY_LOCATION='${SSL_KEY_LOCATION} >>client_bot_info.txt
+      sslkeylocationinput=$SSL_KEY_LOCATION
+    else
+      echo "Cannot leave SSL key file location empty! Please enter a value:"
     fi
   done
 else
-  echo 'SSL_KEY_LOCATION='${SSL_KEY_LOCATION} >>client_bot_info.txt
-fi
+  echo 'SSL_KEY_LOCATION=' >>client_bot_info.txt
 fi
 
-if [ -z "$SSL_CRT_LOCATION" ]; then
-if [ "$HTTPS_CHOICE" -o "$input5" = 'y' ]; then
- echo "prompt: Please enter the name and location of your SSL .crt file:"
-  while [ -z "$input7" ]
-   do
-    read  input7
-    if [ ! -z "$input7" ]
-     then
-      echo 'SSL_CRT_LOCATION='${input7} >>client_bot_info.txt
-     else
-       echo "Cannot leave ssl certificate file location empty! Please enter a value:"
+
+#==============================================================================
+# Process the SSL_CRT_LOCATION value, saved as SSL_CRT_LOCATION
+#
+if [ "$HTTPS_CHOICE" -a "$httpschoiceinput" = 'y' ]; then
+  if [ -z "$SSL_CRT_LOCATION" ]; then
+    echo "prompt: Please enter the name and location of your SSL .crt file:"
+  else
+    echo "prompt: Please enter the name and location of your SSL .crt file (default ${SSL_CRT_LOCATION}):"
+  fi
+
+  while [ -z "$sslcrtlocationinput" ]
+  do
+    read  sslcrtlocationinput
+    if [ ! -z "$sslcrtlocationinput" ]
+    then
+      echo 'SSL_CRT_LOCATION='${sslcrtlocationinput} >>client_bot_info.txt
+    elif [ -n "$SSL_CRT_LOCATION" ]; then
+      echo 'SSL_CRT_LOCATION='${SSL_CRT_LOCATION} >>client_bot_info.txt
+      sslcrtlocationinput=$SSL_CRT_LOCATION
+    else
+      echo "Cannot leave SSL certificate file location empty! Please enter a value:"
     fi
   done
 else
-  echo 'SSL_CRT_LOCATION='${SSL_CRT_LOCATION} >>client_bot_info.txt
-fi
+  echo 'SSL_CRT_LOCATION=' >>client_bot_info.txt
 fi
 
 WICKRIO_BOT_NAME=$BOT_NAME node configure.js
