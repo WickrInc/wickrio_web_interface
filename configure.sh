@@ -30,6 +30,9 @@ if [ -f client_bot_info.txt ]; then
   if [ -n "$BOT_API_AUTH_TOKEN" ]; then
     API_AUTH_TOKEN=$BOT_API_AUTH_TOKEN
   fi
+else
+  # If the client_bot_info.txt is not set the this is the initial configuration
+  initial_config=true
 fi
 
 if [ -z "$CLIENT_NAME" ]; then
@@ -57,7 +60,12 @@ fi
 if [ -z "$LISTEN_PORT" ]; then
   echo "prompt:Please enter your client bot's port:"
 else
-  echo "prompt:Please enter your client bot's port (default ${LISTEN_PORT}):"
+  if [ -z "$initial_config" ]; then
+    echo "prompt:Please enter your client bot's port (default ${LISTEN_PORT}):"
+  else
+    botportinput=${LISTEN_PORT}
+    echo 'BOT_PORT='${botportinput} >>client_bot_info.txt
+  fi
 fi
 
 while [ -z "$botportinput" ]
@@ -82,7 +90,12 @@ done
 if [ -z "$API_KEY" ]; then
   echo "prompt:Please enter your client bot's API-Key:"
 else
-  echo "prompt:Please enter your client bot's API-Key (default ${API_KEY}):"
+  if [ -z "$initial_config" ]; then
+    echo "prompt:Please enter your client bot's API-Key (default ${API_KEY}):"
+  else
+    apikeyinput=${API_KEY}
+    echo 'BOT_API_KEY='${apikeyinput} >>client_bot_info.txt
+  fi
 fi
 
 while [ -z "$apikeyinput" ]
@@ -106,7 +119,12 @@ done
 if [ -z "$API_AUTH_TOKEN" ]; then
   echo "prompt:Please create an Web API Basic Authorization Token, we recommend an alphanumeric string with at least 24 characters:"
 else
-  echo "prompt:Please create an Web API Basic Authorization Token, we recommend an alphanumeric string with at least 24 characters (default ${API_AUTH_TOKEN}):"
+  if [ -z "$initial_config" ]; then
+    echo "prompt:Please create an Web API Basic Authorization Token, we recommend an alphanumeric string with at least 24 characters (default ${API_AUTH_TOKEN}):"
+  else
+    authtokeninput=${API_AUTH_TOKEN}
+    echo 'BOT_API_AUTH_TOKEN='${authtokeninput} >>client_bot_info.txt
+  fi
 fi
 
 while [ -z "$authtokeninput" ]
@@ -130,7 +148,12 @@ done
 if [ -z "$HTTPS_CHOICE" ]; then
   echo "prompt:Do you want to set up an HTTPS connection with the Web API Interface, highly recommended [y/n]:"
 else
-  echo "prompt:Do you want to set up an HTTPS connection with the Web API Interface, highly recommended [y/n] (default ${HTTPS_CHOICE}):"
+  if [ -z "$initial_config" ]; then
+    echo "prompt:Do you want to set up an HTTPS connection with the Web API Interface, highly recommended [y/n] (default ${HTTPS_CHOICE}):"
+  else
+    httpschoiceinput=${HTTPS_CHOICE}
+    echo 'HTTPS_CHOICE='${httpschoiceinput} >>client_bot_info.txt
+  fi
 fi
 
 while [ -z "$httpschoiceinput" ]
@@ -162,7 +185,12 @@ if [ "$HTTPS_CHOICE" -a "$httpschoiceinput" = 'y' ]; then
   if [ -z "$SSL_KEY_LOCATION" ]; then
     echo "prompt:Please enter the name and location of your SSL .key file:"
   else
-    echo "prompt:Please enter the name and location of your SSL .key file (default ${SSL_KEY_LOCATION}):"
+    if [ -z "$initial_config" ]; then
+      echo "prompt:Please enter the name and location of your SSL .key file (default ${SSL_KEY_LOCATION}):"
+    else
+      sslkeylocationinput=${SSL_KEY_LOCATION}
+      echo 'SSL_KEY_LOCATION='${sslkeylocationinput} >>client_bot_info.txt
+    fi
   fi
 
   while [ -z "$sslkeylocationinput" ]
@@ -191,7 +219,12 @@ if [ "$HTTPS_CHOICE" -a "$httpschoiceinput" = 'y' ]; then
   if [ -z "$SSL_CRT_LOCATION" ]; then
     echo "prompt:Please enter the name and location of your SSL .crt file:"
   else
-    echo "prompt:Please enter the name and location of your SSL .crt file (default ${SSL_CRT_LOCATION}):"
+    if [ -z "$initial_config" ]; then
+      echo "prompt:Please enter the name and location of your SSL .crt file (default ${SSL_CRT_LOCATION}):"
+    else
+      sslcrtlocationinput=${SSL_CRT_LOCATION}
+      echo 'SSL_CRT_LOCATION='${sslcrtlocationinput} >>client_bot_info.txt
+    fi
   fi
 
   while [ -z "$sslcrtlocationinput" ]
