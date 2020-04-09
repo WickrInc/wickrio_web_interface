@@ -165,6 +165,7 @@ do
     httpschoiceinput=`echo $httpschoiceinput | cut -c1-1` 
     if [ "$httpschoiceinput" = 'y' -o "$httpschoiceinput" = 'n' ]; then
       echo 'HTTPS_CHOICE='${httpschoiceinput} >>client_bot_info.txt
+      HTTPS_CHOICE=${httpschoiceinput}
     else
       echo "prompt:Please enter either 'y' or 'n':"
       httpschoiceinput=""
@@ -198,10 +199,23 @@ if [ "$HTTPS_CHOICE" -a "$httpschoiceinput" = 'y' ]; then
     read  sslkeylocationinput
     if [ ! -z "$sslkeylocationinput" ]
     then
-      echo 'SSL_KEY_LOCATION='${sslkeylocationinput} >>client_bot_info.txt
+      if [ ! -f "$sslkeylocationinput" ]
+      then
+        echo "Cannot find or access $sslkeylocationinput"
+        echo "prompt:Please enter a value:"
+        sslkeylocationinput=""
+      else
+        echo 'SSL_KEY_LOCATION='${sslkeylocationinput} >>client_bot_info.txt
+      fi
     elif [ -n "$SSL_KEY_LOCATION" ]; then
-      echo 'SSL_KEY_LOCATION='${SSL_KEY_LOCATION} >>client_bot_info.txt
-      sslkeylocationinput=$SSL_KEY_LOCATION
+      if [ ! -f "$sslkeylocationinput" ]
+      then
+        echo "Cannot find or access $SSL_KEY_LOCATION"
+        echo "prompt:Please enter a value:"
+      else
+        echo 'SSL_KEY_LOCATION='${SSL_KEY_LOCATION} >>client_bot_info.txt
+        sslkeylocationinput=$SSL_KEY_LOCATION
+      fi
     else
       echo "Cannot leave SSL key file location empty!"
       echo "prompt:Please enter a value:"
@@ -232,10 +246,23 @@ if [ "$HTTPS_CHOICE" -a "$httpschoiceinput" = 'y' ]; then
     read  sslcrtlocationinput
     if [ ! -z "$sslcrtlocationinput" ]
     then
-      echo 'SSL_CRT_LOCATION='${sslcrtlocationinput} >>client_bot_info.txt
+      if [ ! -f "$sslcrtlocationinput" ]
+      then
+        echo "Cannot find or access $sslcrtlocationinput"
+        echo "prompt:Please enter a value:"
+        sslcrtlocationinput=""
+      else
+        echo 'SSL_CRT_LOCATION='${sslcrtlocationinput} >>client_bot_info.txt
+      fi
     elif [ -n "$SSL_CRT_LOCATION" ]; then
-      echo 'SSL_CRT_LOCATION='${SSL_CRT_LOCATION} >>client_bot_info.txt
-      sslcrtlocationinput=$SSL_CRT_LOCATION
+      if [ ! -f "$SSL_CRT_LOCATION" ]
+      then
+        echo "Cannot find or access $SSL_CRT_LOCATION"
+        echo "prompt:Please enter a value:"
+      else
+        echo 'SSL_CRT_LOCATION='${SSL_CRT_LOCATION} >>client_bot_info.txt
+        sslcrtlocationinput=$SSL_CRT_LOCATION
+      fi
     else
       echo "Cannot leave SSL certificate file location empty!"
       echo "prompt:Please enter a value:"
