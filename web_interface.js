@@ -13,7 +13,7 @@ process.setMaxListeners(0);
 
 function exitHandler(options, err) {
   if (err) {
-    console.log('Error:', err.stack);
+    console.log("Exit reason:", err['reason']);
     addon.cmdStopAsyncRecvMessages();
     console.log(addon.closeClient());
     process.exit();
@@ -72,6 +72,23 @@ return new Promise((resolve, reject) => {
   if (https_choice === 'yes' || https_choice === 'y') {
     ssl_key_location = client[5].substring(client[5].indexOf('=') + 1, client[5].length);
     ssl_crt_location = client[6].substring(client[6].indexOf('=') + 1, client[6].length);
+
+    try {
+      if (!fs.existsSync(ssl_key_location)) {
+        exitHandler(null, { exit: true, reason: 'ERROR: Cannot access '+ssl_key_location });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+
+    try {
+      if (!fs.existsSync(ssl_crt_location)) {
+        exitHandler(null, { exit: true, reason: 'ERROR: Cannot access '+ssl_crt_location });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+
     const credentials = {
       key: fs.readFileSync(ssl_key_location, 'utf8'),
       cert: fs.readFileSync(ssl_crt_location, 'utf8')
