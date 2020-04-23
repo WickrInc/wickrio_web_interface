@@ -62,9 +62,9 @@ async function main() {
   bot.setAdminOnly(false);
 
   bot_username = tokens.WICKRIO_BOT_NAME.value;
-  bot_port = tokens.LISTEN_PORT.value;
-  bot_api_key = tokens.API_KEY.value;
-  bot_api_auth_token = tokens.API_AUTH_TOKEN.value;
+  bot_port = tokens.BOT_PORT.value;
+  bot_api_key = tokens.BOT_API_KEY.value;
+  bot_api_auth_token = tokens.BOT_API_AUTH_TOKEN.value;
   https_choice = tokens.HTTPS_CHOICE.value;
 
   console.log("bot_username="+bot_username);
