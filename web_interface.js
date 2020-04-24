@@ -2,30 +2,29 @@ const express = require('express');
 const https = require('https');
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
-const addon = require('wickrio_addon');
+const WickrIOAPI = require('wickrio_addon');
+const WickrIOBotAPI = require('wickrio-bot-api');
 const fs = require('fs');
 const app = express();
 app.use(helmet()); //security http headers
+
+const bot = new WickrIOBotAPI.WickrIOBot();
 
 process.title = "wickrioWebApi";
 process.stdin.resume(); //so the program will not close instantly
 process.setMaxListeners(0);
 
-function exitHandler(options, err) {
-  if (err) {
-    console.log("Exit reason:", err['reason']);
-    addon.cmdStopAsyncRecvMessages();
-    console.log(addon.closeClient());
-    process.exit();
-  }
-  if (options.exit) {
-    addon.cmdStopAsyncRecvMessages();
-    console.log(addon.closeClient());
-    process.exit();
-  } else if (options.pid) {
-    addon.cmdStopAsyncRecvMessages();
-    console.log(addon.closeClient());
-    process.kill(process.pid);
+async function exitHandler(options, err) {
+  try {
+    var closed = await bot.close();
+    if (err || options.exit) {
+      console.log("Exit reason:", err);
+      process.exit();
+    } else if (options.pid) {
+      process.kill(process.pid);
+    }
+  } catch (err) {
+    console.log(err);
   }
 }
 
@@ -39,39 +38,42 @@ process.on('SIGUSR2', exitHandler.bind(null, {pid: true}));
 //catches uncaught exceptions
 process.on('uncaughtException', exitHandler.bind(null, {exit: true}));
 
-var client,
-  bot_username,
-  bot_port,
-  bot_api_key,
-  bot_api_auth_token,
-  ssl_key_location,
-  ssl_crt_location;
+var bot_username,
+    bot_port,
+    bot_api_key,
+    bot_api_auth_token,
+    ssl_key_location,
+    ssl_crt_location;
 
-return new Promise((resolve, reject) => {
-  client = fs.readFileSync('client_bot_info.txt', 'utf-8');
-  client = client.split('\n');
-  bot_username = client[0].substring(client[0].indexOf('=') + 1, client[0].length);
-  bot_port = client[1].substring(client[1].indexOf('=') + 1, client[1].length);
-  bot_api_key = client[2].substring(client[2].indexOf('=') + 1, client[2].length);
-  bot_api_auth_token = client[3].substring(client[3].indexOf('=') + 1, client[3].length);
-  https_choice = client[4].substring(client[4].indexOf('=') + 1, client[4].length);
+async function main() {
   try {
-    if (process.argv[2] === undefined) {
-      var response = addon.clientInit(bot_username);
-      resolve(response);
-    } else {
-      var response = addon.clientInit(process.argv[2]);
-      resolve(response);
+    var tokens = JSON.parse(process.env.tokens);
+    var status = await bot.start(tokens.WICKRIO_BOT_NAME.value)
+    if (!status) {
+      exitHandler(null, {
+        exit: true,
+        reason: 'Client not able to start'
+      });
     }
   } catch (err) {
-    return console.log(err);
+    console.log(err);
   }
-}).then(result => {
-  console.log(result);
+
+  bot.setAdminOnly(false);
+
+  bot_username = tokens.WICKRIO_BOT_NAME.value;
+  bot_port = tokens.BOT_PORT.value;
+  bot_api_key = tokens.BOT_API_KEY.value;
+  bot_api_auth_token = tokens.BOT_API_AUTH_TOKEN.value;
+  https_choice = tokens.HTTPS_CHOICE.value;
+
+  console.log("bot_username="+bot_username);
+  console.log("bot_port="+bot_port);
+  console.log("https_choice="+https_choice);
 
   if (https_choice === 'yes' || https_choice === 'y') {
-    ssl_key_location = client[5].substring(client[5].indexOf('=') + 1, client[5].length);
-    ssl_crt_location = client[6].substring(client[6].indexOf('=') + 1, client[6].length);
+    ssl_key_location = tokens.SSL_KEY_LOCATION.value;
+    ssl_crt_location = tokens.SSL_CRT_LOCATION.value;
 
     try {
       if (!fs.existsSync(ssl_key_location)) {
@@ -101,28 +103,6 @@ return new Promise((resolve, reject) => {
     app.listen(bot_port, () => {
       console.log('We are live on ' + bot_port);
     });
-  }
-  //Basic function to validate credentials for example
-  function checkCreds(authToken) {
-    try {
-      var valid = true;
-      const authStr = new Buffer(authToken, 'base64').toString();
-      //implement authToken verification in here
-      if (authStr !== bot_api_auth_token)
-        valid = false;
-      return valid;
-    } catch (err) {
-      console.log(err);
-    }
-  }
-
-  function isJson(str) {
-    try {
-      str = JSON.parse(str);
-    } catch (e) {
-      return false;
-    }
-    return str;
   }
 
   // parse application/x-www-form-urlencoded
@@ -200,7 +180,7 @@ return new Promise((resolve, reject) => {
           }
           console.log('displayName:', displayName);
           try {
-            var s1t1a = addon.cmdSend1to1Attachment(users, attachment, displayName, ttl, bor);
+            var s1t1a = WickrIOAPI.cmdSend1to1Attachment(users, attachment, displayName, ttl, bor);
             res.send(s1t1a);
           } catch (err) {
             console.log(err);
@@ -210,7 +190,7 @@ return new Promise((resolve, reject) => {
         } else {
           var message = req.body.message;
           try {
-            var csm = addon.cmdSend1to1Message(users, message, ttl, bor);
+            var csm = WickrIOAPI.cmdSend1to1Message(users, message, ttl, bor);
             console.log(csm);
             res.send(csm);
           } catch (err) {
@@ -239,7 +219,7 @@ return new Promise((resolve, reject) => {
           console.log('attachment:', attachment);
           console.log('displayName:', displayName);
           try {
-            var csra = addon.cmdSendRoomAttachment(vGroupID, attachment, displayName, ttl, bor);
+            var csra = WickrIOAPI.cmdSendRoomAttachment(vGroupID, attachment, displayName, ttl, bor);
             console.log(csra);
             res.send(csra);
           } catch (err) {
@@ -250,7 +230,7 @@ return new Promise((resolve, reject) => {
         } else {
           var message = req.body.message;
           try {
-            var csrm = addon.cmdSendRoomMessage(vGroupID, message, ttl, bor);
+            var csrm = WickrIOAPI.cmdSendRoomMessage(vGroupID, message, ttl, bor);
             console.log(csrm);
             res.send(csrm);
           } catch (err) {
@@ -286,7 +266,7 @@ return new Promise((resolve, reject) => {
       return res.send('Access denied: invalid basic-auth token.');
     } else {
       try {
-        var statistics = addon.cmdGetStatistics();
+        var statistics = WickrIOAPI.cmdGetStatistics();
         var response = isJson(statistics);
         if (response !== false) {
           statistics = response;
@@ -324,7 +304,7 @@ return new Promise((resolve, reject) => {
       return res.type('txt').status(401).send('Access denied: invalid basic-auth token.');
     } else {
       try {
-        var cleared = addon.cmdClearStatistics();
+        var cleared = WickrIOAPI.cmdClearStatistics();
         console.log(cleared);
         res.send("statistics cleared successfully");
       } catch (err) {
@@ -378,7 +358,7 @@ return new Promise((resolve, reject) => {
         masters.push(room.masters[i].name);
       }
       try {
-        var car = addon.cmdAddRoom(members, masters, title, description, ttl, bor);
+        var car = WickrIOAPI.cmdAddRoom(members, masters, title, description, ttl, bor);
         res.type('json').send(car);
       } catch (err) {
         console.log(err);
@@ -409,7 +389,7 @@ return new Promise((resolve, reject) => {
       res.set('Content-Type', 'application/json');
       var vGroupID = req.params.vGroupID;
       try {
-        var cgr = addon.cmdGetRoom(vGroupID);
+        var cgr = WickrIOAPI.cmdGetRoom(vGroupID);
         res.send(cgr);
       } catch (err) {
         console.log(err);
@@ -438,7 +418,7 @@ return new Promise((resolve, reject) => {
       return res.type('txt').status(401).send('Access denied: invalid basic-auth token.');
     } else {
       try {
-        var cgr = addon.cmdGetRooms();
+        var cgr = WickrIOAPI.cmdGetRooms();
         res.type('json').send(cgr);
       } catch (err) {
         console.log(err);
@@ -470,7 +450,7 @@ return new Promise((resolve, reject) => {
       var reason = req.query.reason;
       if (reason === 'leave') {
         try {
-          var clr = addon.cmdLeaveRoom(vGroupID);
+          var clr = WickrIOAPI.cmdLeaveRoom(vGroupID);
           console.log('cmdLeaveRoom:', clr);
           res.send(bot_username + " left room successfully");
         } catch (err) {
@@ -480,7 +460,7 @@ return new Promise((resolve, reject) => {
         }
       } else {
         try {
-          var cdr = addon.cmdDeleteRoom(vGroupID);
+          var cdr = WickrIOAPI.cmdDeleteRoom(vGroupID);
           console.log('cmdDeleteRoom:', cdr);
           res.send("Room deleted successfully");
         } catch (err) {
@@ -540,7 +520,7 @@ return new Promise((resolve, reject) => {
         }
       }
       try {
-        var cmr = addon.cmdModifyRoom(vGroupID, members, masters, title, description, ttl, bor);
+        var cmr = WickrIOAPI.cmdModifyRoom(vGroupID, members, masters, title, description, ttl, bor);
         console.log(cmr);
         res.send("Room modified successfully");
       } catch (err) {
@@ -583,7 +563,7 @@ return new Promise((resolve, reject) => {
         members.push(groupconvo.members[i].name);
       }
       try {
-        var cagc = addon.cmdAddGroupConvo(members, ttl, bor);
+        var cagc = WickrIOAPI.cmdAddGroupConvo(members, ttl, bor);
         console.log(cagc);
         res.type('json').send(cagc);
       } catch (err) {
@@ -613,7 +593,7 @@ return new Promise((resolve, reject) => {
       return res.type('txt').status(401).send('Access denied: invalid basic-auth token.');
     } else {
       try {
-        var cggc = addon.cmdGetGroupConvos();
+        var cggc = WickrIOAPI.cmdGetGroupConvos();
         res.type('json').send(cggc);
       } catch (err) {
         console.log(err);
@@ -643,7 +623,7 @@ return new Promise((resolve, reject) => {
     } else {
       var vGroupID = req.params.vGroupID;
       try {
-        var cggc = addon.cmdGetGroupConvo(vGroupID);
+        var cggc = WickrIOAPI.cmdGetGroupConvo(vGroupID);
         res.type('json').send(cggc);
       } catch (err) {
         console.log(err);
@@ -675,7 +655,7 @@ return new Promise((resolve, reject) => {
     } else {
       var vGroupID = req.params.vGroupID;
       try {
-        var cdgc = addon.cmdDeleteGroupConvo(vGroupID);
+        var cdgc = WickrIOAPI.cmdDeleteGroupConvo(vGroupID);
         console.log(cdgc);
         res.send(bot_username + " has left the GroupConvo.");
       } catch (err) {
@@ -710,7 +690,7 @@ return new Promise((resolve, reject) => {
       var msgArray = [];
       for (var i = 0; i < count; i++) {
         try {
-          var message = await addon.cmdGetReceivedMessage();
+          var message = await WickrIOAPI.cmdGetReceivedMessage();
         } catch (err) {
           console.log(err);
           res.statusCode = 400;
@@ -753,7 +733,7 @@ return new Promise((resolve, reject) => {
       var callbackUrl = req.query.callbackurl;
       console.log('callbackUrl:', callbackUrl)
       try {
-        var csmc = addon.cmdSetMsgCallback(callbackUrl);
+        var csmc = WickrIOAPI.cmdSetMsgCallback(callbackUrl);
         console.log(csmc);
         res.type('txt').send(csmc);
       } catch (err) {
@@ -783,7 +763,7 @@ return new Promise((resolve, reject) => {
       return res.type('txt').status(401).send('Access denied: invalid basic-auth token.');
     } else {
       try {
-        var cgmc = addon.cmdGetMsgCallback();
+        var cgmc = WickrIOAPI.cmdGetMsgCallback();
         res.type('txt').send(cgmc);
       } catch (err) {
         console.log(err);
@@ -812,7 +792,7 @@ return new Promise((resolve, reject) => {
       return res.type('txt').status(401).send('Access denied: invalid basic-auth token.');
     } else {
       try {
-        var cdmc = addon.cmdDeleteMsgCallback();
+        var cdmc = WickrIOAPI.cmdDeleteMsgCallback();
         console.log(cdmc);
         res.type('txt').send(cdmc);
       } catch (err) {
@@ -842,7 +822,7 @@ return new Promise((resolve, reject) => {
       return res.type('txt').status(401).send('Access denied: invalid basic-auth token.');
     } else {
       try {
-        var cgd = addon.cmdGetDirectory();
+        var cgd = WickrIOAPI.cmdGetDirectory();
         res.type('json').send(cgd);
       } catch (err) {
         console.log(err);
@@ -861,6 +841,29 @@ return new Promise((resolve, reject) => {
     return res.type('txt').status(404).send('Endpoint ' + req.url + ' not found');
   });
 
-}).catch(error => {
-  console.log('Error: ', error);
-});
+}
+
+//Basic function to validate credentials for example
+function checkCreds(authToken) {
+  try {
+    var valid = true;
+    const authStr = Buffer.from(authToken, 'base64').toString();
+    //implement authToken verification in here
+    if (authStr !== bot_api_auth_token)
+      valid = false;
+    return valid;
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+function isJson(str) {
+  try {
+    str = JSON.parse(str);
+  } catch (e) {
+    return false;
+  }
+  return str;
+}
+
+main();
