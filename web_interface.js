@@ -7,6 +7,7 @@ const WickrIOBotAPI = require('wickrio-bot-api');
 const fs = require('fs');
 const app = express();
 app.use(helmet()); //security http headers
+import multer from 'multer'
 
 const bot = new WickrIOBotAPI.WickrIOBot();
 
@@ -29,21 +30,21 @@ async function exitHandler(options, err) {
 }
 
 //catches ctrl+c and stop.sh events
-process.on('SIGINT', exitHandler.bind(null, {exit: true}));
+process.on('SIGINT', exitHandler.bind(null, { exit: true }));
 
 // catches "kill pid" (for example: nodemon restart)
-process.on('SIGUSR1', exitHandler.bind(null, {pid: true}));
-process.on('SIGUSR2', exitHandler.bind(null, {pid: true}));
+process.on('SIGUSR1', exitHandler.bind(null, { pid: true }));
+process.on('SIGUSR2', exitHandler.bind(null, { pid: true }));
 
 //catches uncaught exceptions
-process.on('uncaughtException', exitHandler.bind(null, {exit: true}));
+process.on('uncaughtException', exitHandler.bind(null, { exit: true }));
 
 var bot_username,
-    bot_port,
-    bot_api_key,
-    bot_api_auth_token,
-    ssl_key_location,
-    ssl_crt_location;
+  bot_port,
+  bot_api_key,
+  bot_api_auth_token,
+  ssl_key_location,
+  ssl_crt_location;
 
 async function main() {
   try {
@@ -67,9 +68,9 @@ async function main() {
   bot_api_auth_token = tokens.BOT_API_AUTH_TOKEN.value;
   https_choice = tokens.HTTPS_CHOICE.value;
 
-  console.log("bot_username="+bot_username);
-  console.log("bot_port="+bot_port);
-  console.log("https_choice="+https_choice);
+  console.log("bot_username=" + bot_username);
+  console.log("bot_port=" + bot_port);
+  console.log("https_choice=" + https_choice);
 
   if (https_choice === 'yes' || https_choice === 'y') {
     ssl_key_location = tokens.SSL_KEY_LOCATION.value;
@@ -77,7 +78,7 @@ async function main() {
 
     try {
       if (!fs.existsSync(ssl_key_location)) {
-        exitHandler(null, { exit: true, reason: 'ERROR: Cannot access '+ssl_key_location });
+        exitHandler(null, { exit: true, reason: 'ERROR: Cannot access ' + ssl_key_location });
       }
     } catch (err) {
       console.error(err);
@@ -85,7 +86,7 @@ async function main() {
 
     try {
       if (!fs.existsSync(ssl_crt_location)) {
-        exitHandler(null, { exit: true, reason: 'ERROR: Cannot access '+ssl_crt_location });
+        exitHandler(null, { exit: true, reason: 'ERROR: Cannot access ' + ssl_crt_location });
       }
     } catch (err) {
       console.error(err);
@@ -106,11 +107,11 @@ async function main() {
   }
 
   // parse application/x-www-form-urlencoded
-  app.use(bodyParser.urlencoded({extended: false}));
+  app.use(bodyParser.urlencoded({ extended: false }));
   // parse application/json
   app.use(bodyParser.json());
 
-  app.use(function(error, req, res, next) {
+  app.use(function (error, req, res, next) {
     if (error instanceof SyntaxError) {
       console.log('bodyParser:', error);
       res.statusCode = 400;
@@ -120,13 +121,14 @@ async function main() {
     }
   });
 
-  app.all('*', function(req, res, next) {
+  app.all('*', function (req, res, next) {
     next();
   });
 
   var endpoint = "/WickrIO/V1/Apps/" + bot_api_key;
+  var upload = multer({ dest: 'attachments/' })
 
-  app.post(endpoint + "/Messages", function(req, res) {
+  app.post(endpoint + "/Messages", function (req, res) {
     res.set('Content-Type', 'text/plain');
     res.set('Authorization', 'Basic base64_auth_token');
     var authHeader = req.get('Authorization');
@@ -243,7 +245,55 @@ async function main() {
     }
   });
 
-  app.get(endpoint + "/Statistics", function(req, res) {
+  app.post(endpoint + "/file", upload.single('attachment'), function (req, res) {
+    res.set('Content-Type', 'text/plain');
+    res.set('Authorization', 'Basic base64_auth_token');
+
+    var authHeader = req.get('Authorization');
+    var authToken;
+    if (authHeader) {
+      if (authHeader.indexOf(' ') == -1) {
+        authToken = authHeader;
+      } else {
+        authHeader = authHeader.split(' ');
+        authToken = authHeader[1];
+      }
+    } else {
+      res.statusCode = 401;
+      return res.send('Access denied: invalid Authorization Header format. Correct format: "Authorization: Basic base64_auth_token"');
+    }
+    // Check credentials
+    if (!checkCreds(authToken)) {
+      res.statusCode = 401;
+      return res.send('Access denied: invalid basic-auth token.');
+    } else if (!req.body.vgroupid) {
+      return res.send('Access denied: need vgroidid in body');
+    }
+    else {
+      var userAttachments;
+      var userNewFile;
+      var inFile;
+
+      if (req.file === undefined) {
+        console.log('attachment is not defined!')
+        return
+      } else {
+        // userAttachments = process.cwd() + '/attachments/' + req.user.email;
+        userAttachments = process.cwd() + '/attachments'
+        userNewFile = userAttachments + '/' + req.file.originalname;
+        inFile = process.cwd() + '/attachments/' + req.file.filename;
+
+        fs.mkdirSync(userAttachments, { recursive: true });
+        if (fs.existsSync(userNewFile)) fs.unlinkSync(userNewFile);
+        fs.renameSync(inFile, userNewFile);
+        var csra = WickrIOAPI.cmdSendRoomAttachment(req.body.vgroupid, req.file, req.file.originalname, '', '');
+      }
+
+    }
+  });
+
+
+  app.get(endpoint + "/Statistics", function (req, res) {
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -284,7 +334,7 @@ async function main() {
     }
   });
 
-  app.delete(endpoint + "/Statistics", function(req, res) {
+  app.delete(endpoint + "/Statistics", function (req, res) {
     res.set('Content-Type', 'text/plain');
     var authHeader = req.get('Authorization');
     var authToken;
@@ -315,7 +365,7 @@ async function main() {
     }
   });
 
-  app.post(endpoint + "/Rooms", function(req, res) {
+  app.post(endpoint + "/Rooms", function (req, res) {
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -368,7 +418,7 @@ async function main() {
     }
   });
 
-  app.get(endpoint + "/Rooms/:vGroupID", function(req, res) {
+  app.get(endpoint + "/Rooms/:vGroupID", function (req, res) {
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -399,7 +449,7 @@ async function main() {
     }
   });
 
-  app.get(endpoint + "/Rooms", function(req, res) {
+  app.get(endpoint + "/Rooms", function (req, res) {
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -428,7 +478,7 @@ async function main() {
     }
   });
 
-  app.delete(endpoint + "/Rooms/:vGroupID", function(req, res) {
+  app.delete(endpoint + "/Rooms/:vGroupID", function (req, res) {
     res.set('Content-Type', 'text/plain');
     res.set('Authorization', 'Basic base64_auth_token');
     var authHeader = req.get('Authorization');
@@ -474,7 +524,7 @@ async function main() {
   });
 
   //ModifyRoom
-  app.post(endpoint + "/Rooms/:vGroupID", function(req, res) {
+  app.post(endpoint + "/Rooms/:vGroupID", function (req, res) {
     res.set('Content-Type', 'text/plain');
     res.set('Authorization', 'Basic base64_auth_token');
     var authHeader = req.get('Authorization');
@@ -531,7 +581,7 @@ async function main() {
     }
   });
 
-  app.post(endpoint + "/GroupConvo", function(req, res) {
+  app.post(endpoint + "/GroupConvo", function (req, res) {
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -574,7 +624,7 @@ async function main() {
     }
   });
 
-  app.get(endpoint + "/GroupConvo", function(req, res) {
+  app.get(endpoint + "/GroupConvo", function (req, res) {
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -603,7 +653,7 @@ async function main() {
     }
   });
 
-  app.get(endpoint + "/GroupConvo/:vGroupID", function(req, res) {
+  app.get(endpoint + "/GroupConvo/:vGroupID", function (req, res) {
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -633,7 +683,7 @@ async function main() {
     }
   });
 
-  app.delete(endpoint + "/GroupConvo/:vGroupID", function(req, res) {
+  app.delete(endpoint + "/GroupConvo/:vGroupID", function (req, res) {
     res.set('Content-Type', 'text/plain');
     res.set('Authorization', 'Basic base64_auth_token');
     var authHeader = req.get('Authorization');
@@ -666,7 +716,7 @@ async function main() {
     }
   });
 
-  app.get(endpoint + "/Messages", async function(req, res) {
+  app.get(endpoint + "/Messages", async function (req, res) {
     res.set('Authorization', 'Basic base64_auth_token');
     var authHeader = req.get('Authorization');
     var authToken;
@@ -712,7 +762,7 @@ async function main() {
     }
   });
 
-  app.post(endpoint + "/MsgRecvCallback", function(req, res) {
+  app.post(endpoint + "/MsgRecvCallback", function (req, res) {
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -744,7 +794,7 @@ async function main() {
     }
   });
 
-  app.get(endpoint + "/MsgRecvCallback", function(req, res) {
+  app.get(endpoint + "/MsgRecvCallback", function (req, res) {
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -763,7 +813,7 @@ async function main() {
       return res.type('txt').status(401).send('Access denied: invalid basic-auth token.');
     } else {
       try {
-        var cgmc = WickrIOAPI.cmdGetMsgCallback();
+        var cgmc = WickrIOAPI.cmdGetMsgCallback(); // callbabck
         res.type('txt').send(cgmc);
       } catch (err) {
         console.log(err);
@@ -773,7 +823,7 @@ async function main() {
     }
   });
 
-  app.delete(endpoint + "/MsgRecvCallback", function(req, res) {
+  app.delete(endpoint + "/MsgRecvCallback", function (req, res) {
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -803,7 +853,7 @@ async function main() {
     }
   });
 
-  app.get(endpoint + "/Directory", function(req, res) {
+  app.get(endpoint + "/Directory", function (req, res) {
     var authHeader = req.get('Authorization');
     var authToken;
     if (authHeader) {
@@ -834,7 +884,7 @@ async function main() {
 
   // What to do for ALL requests for ALL Paths
   // that are not handled above
-  app.all('*', function(req, res) {
+  app.all('*', function (req, res) {
     console.log('*** 404 ***');
     console.log('404 for url: ' + req.url);
     console.log('***********');
