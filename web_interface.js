@@ -278,6 +278,10 @@ async function main() {
         console.log('attachment is not defined!')
         return
       } else {
+
+        const obj = JSON.parse(req.body);
+        let { ttl = '', bor = '' } = obj;
+
         // userAttachments = process.cwd() + '/attachments/' + req.user.email;
         userAttachments = process.cwd() + '/attachments'
         userNewFile = userAttachments + '/' + req.file.originalname;
@@ -286,7 +290,7 @@ async function main() {
         fs.mkdirSync(userAttachments, { recursive: true });
         if (fs.existsSync(userNewFile)) fs.unlinkSync(userNewFile);
         fs.renameSync(inFile, userNewFile);
-        var csra = WickrIOAPI.cmdSendRoomAttachment(req.body.vgroupid, req.file, req.file.originalname, '', '');
+        var csra = WickrIOAPI.cmdSendRoomAttachment(req.body.vgroupid, req.file, req.file.originalname, ttl, bor);
       }
 
     }
