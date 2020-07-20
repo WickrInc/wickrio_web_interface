@@ -1093,6 +1093,18 @@ async function main() {
 			.status(404)
 			.send("Endpoint " + req.url + " not found")
 	})
+
+	// What to do for ALL requests for ALL Paths
+	// that are not handled above
+	app.all("*", function (req, res) {
+		console.log("*** 404 ***")
+		console.log("404 for url: " + req.url)
+		console.log("***********")
+		return res
+			.type("txt")
+			.status(404)
+			.send("Endpoint " + req.url + " not found")
+	})
 }
 
 //Basic function to validate credentials for example
