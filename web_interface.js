@@ -325,28 +325,29 @@ async function main() {
 					bor
 				)
 			} else if (req.body.users) {
-				const obj = JSON.parse(req.body)
-				let { ttl = "", bor = "" } = obj
-
 				// userAttachments = process.cwd() + '/attachments/' + req.user.email;
 				userAttachments = process.cwd() + "/attachments"
 				userNewFile = userAttachments + "/" + req.file.originalname
 				inFile = process.cwd() + "/attachments/" + req.file.filename
 
-				fs.mkdirSync(userAttachments, { recursive: true })
-				if (fs.existsSync(userNewFile)) fs.unlinkSync(userNewFile)
-				fs.renameSync(inFile, userNewFile)
-				let users = req.body.users.split(",")
-				for (let user in users) {
-					var csra = WickrIOAPI.cmdSendRoomAttachment(
-						user,
+				var users = []
+				for (var i in req.body.users) {
+					users.push(req.body.users[i].name)
+				}
+				try {
+					var s1t1a = WickrIOAPI.cmdSend1to1Attachment(
+						users,
 						req.file,
 						req.file.originalname,
 						ttl,
 						bor
 					)
+					res.send(s1t1a)
+				} catch (err) {
+					console.log(err)
+					res.statusCode = 400
+					res.send(err.toString())
 				}
-				return
 			} else if (req.body.vgroupid) {
 				const obj = JSON.parse(req.body)
 				let { ttl = "", bor = "" } = obj
