@@ -348,27 +348,6 @@ async function main() {
 					res.statusCode = 400
 					res.send(err.toString())
 				}
-			} else if (req.body.vgroupid) {
-				const obj = JSON.parse(req.body)
-				let { ttl = "", bor = "" } = obj
-
-				// userAttachments = process.cwd() + '/attachments/' + req.user.email;
-				userAttachments = process.cwd() + "/attachments"
-				userNewFile = userAttachments + "/" + req.file.originalname
-				inFile = process.cwd() + "/attachments/" + req.file.filename
-
-				fs.mkdirSync(userAttachments, { recursive: true })
-				if (fs.existsSync(userNewFile)) fs.unlinkSync(userNewFile)
-				fs.renameSync(inFile, userNewFile)
-				let users = req.body.users.split(",")
-
-				var csra = WickrIOAPI.cmdSendRoomAttachment(
-					req.body.vgroupid,
-					req.file,
-					req.file.originalname,
-					ttl,
-					bor
-				)
 			}
 		}
 	})
