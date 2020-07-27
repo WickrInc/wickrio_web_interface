@@ -7,8 +7,7 @@ const WickrIOBotAPI = require("wickrio-bot-api")
 const fs = require("fs")
 const app = express()
 app.use(helmet()) //security http headers
-import multer from "multer"
-import { EWOULDBLOCK } from "constants"
+const multer = require("multer")
 
 const bot = new WickrIOBotAPI.WickrIOBot()
 
