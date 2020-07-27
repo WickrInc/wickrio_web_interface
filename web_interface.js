@@ -268,7 +268,7 @@ async function main() {
 		}
 	})
 
-	app.post(endpoint + "/file", upload.single("attachment"), function (
+	app.post(endpoint + "/File", upload.single("attachment"), function (
 		req,
 		res
 	) {
@@ -311,6 +311,7 @@ async function main() {
 				// userAttachments = process.cwd() + '/attachments/' + req.user.email;
 				userAttachments = process.cwd() + "/attachments"
 				userNewFile = userAttachments + "/" + req.file.originalname
+
 				inFile = process.cwd() + "/attachments/" + req.file.filename
 
 				fs.mkdirSync(userAttachments, { recursive: true })
@@ -318,7 +319,7 @@ async function main() {
 				fs.renameSync(inFile, userNewFile)
 				var csra = WickrIOAPI.cmdSendRoomAttachment(
 					req.body.vgroupid,
-					req.file,
+					userNewFile,
 					req.file.originalname,
 					ttl,
 					bor
@@ -330,18 +331,18 @@ async function main() {
 				inFile = process.cwd() + "/attachments/" + req.file.filename
 
 				var users = []
-				for (var i in req.body.users) {
-					users.push(req.body.users[i].name)
+				for (var user in req.body.users) {
+					users.push(req.body.users[user].name)
 				}
 				try {
-					var s1t1a = WickrIOAPI.cmdSend1to1Attachment(
+					var reply = WickrIOAPI.cmdSend1to1Attachment(
 						users,
-						req.file,
+						userNewFile,
 						req.file.originalname,
 						ttl,
 						bor
 					)
-					res.send(s1t1a)
+					res.send(reply)
 				} catch (err) {
 					console.log(err)
 					res.statusCode = 400
