@@ -317,13 +317,20 @@ async function main() {
 				console.log({ inFile, userNewFile })
 
 				if (req.body.vgroupid) {
-					var csra = WickrIOAPI.cmdSendRoomAttachment(
-						req.body.vgroupid,
-						userNewFile,
-						req.file.originalname,
-						ttl,
-						bor
-					)
+					try {
+						var csra = WickrIOAPI.cmdSendRoomAttachment(
+							req.body.vgroupid,
+							userNewFile,
+							req.file.originalname,
+							ttl,
+							bor
+						)
+						res.send(csra)
+					} catch (err) {
+						console.log(err)
+						res.statusCode = 400
+						res.send(err.toString())
+					}
 				} else if (req.body.users) {
 					// userAttachments = process.cwd() + '/attachments/' + req.user.email;
 					console.log({ bodyusers: req.body.users })
