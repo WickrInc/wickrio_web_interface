@@ -300,15 +300,11 @@ async function main() {
 			var userAttachments
 			var userNewFile
 			var inFile
-
+			let { ttl = "", bor = "" } = req.body
 			if (req.file === undefined) {
 				console.log("attachment is not defined!")
 				return
-			} else if (req.body.vgroupid) {
-				const obj = JSON.parse(req.body)
-				let { ttl = "", bor = "" } = obj
-
-				// userAttachments = process.cwd() + '/attachments/' + req.user.email;
+			} else {
 				userAttachments = process.cwd() + "/attachments"
 				userNewFile = userAttachments + "/" + req.file.originalname
 
@@ -316,37 +312,39 @@ async function main() {
 
 				fs.mkdirSync(userAttachments, { recursive: true })
 				if (fs.existsSync(userNewFile)) fs.unlinkSync(userNewFile)
-				fs.renameSync(inFile, userNewFile)
-				var csra = WickrIOAPI.cmdSendRoomAttachment(
-					req.body.vgroupid,
-					userNewFile,
-					req.file.originalname,
-					ttl,
-					bor
-				)
-			} else if (req.body.users) {
 				// userAttachments = process.cwd() + '/attachments/' + req.user.email;
-				userAttachments = process.cwd() + "/attachments"
-				userNewFile = userAttachments + "/" + req.file.originalname
-				inFile = process.cwd() + "/attachments/" + req.file.filename
+				fs.renameSync(inFile, userNewFile)
+				console.log({ inFile, userNewFile })
 
-				var users = []
-				for (var user in req.body.users) {
-					users.push(req.body.users[user].name)
-				}
-				try {
-					var reply = WickrIOAPI.cmdSend1to1Attachment(
-						users,
+				if (req.body.vgroupid) {
+					var csra = WickrIOAPI.cmdSendRoomAttachment(
+						req.body.vgroupid,
 						userNewFile,
 						req.file.originalname,
 						ttl,
 						bor
 					)
-					res.send(reply)
-				} catch (err) {
-					console.log(err)
-					res.statusCode = 400
-					res.send(err.toString())
+				} else if (req.body.users) {
+					// userAttachments = process.cwd() + '/attachments/' + req.user.email;
+					console.log({ bodyusers: req.body.users })
+					var users = []
+					for (let user of JSON.parse(req.body.users)) {
+						users.push(user)
+					}
+					try {
+						let reply = WickrIOAPI.cmdSend1to1Attachment(
+							users,
+							userNewFile,
+							req.file.originalname,
+							ttl,
+							bor
+						)
+						res.send(reply)
+					} catch (err) {
+						console.log(err)
+						res.statusCode = 400
+						res.send(err.toString())
+					}
 				}
 			}
 		}
