@@ -1,42 +1,176 @@
 {
-	"name": "wickrio_web_interface",
-	"version": "5.59.2",
-	"description": "WickrIO Node.JS API Web Interface",
-	"main": "web_interface.js",
-	"author": "Paul Cushman (pcushman@wickr.com)",
-	"license": "ISC",
-	"dependencies": {
-		"fs": "0.0.2",
-		"body-parser": "^1.19.0",
-		"express": "^4.17.1",
-		"helmet": "^3.20.0",
-		"cron": "^1.7.1",
-		"csv-writer": "^1.5.0",
-		"log4js": "^5.2.1",
-		"pm2": "^3.5.1",
-		"prompt": "^1.0.0",
-		"dotenv": "^8.2.0",
-		"wickrio-bot-api": "5.54.x",
-		"multer": "^1.4.2",
-		"wickrio_addon": "5.51.x"
-	},
-	"scripts": {
-		"start": "pm2 start processes.json --update-env",
-		"stop": "pm2 delete processes.json"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/WickrInc/wickrio_web_interface"
-	},
-	"keywords": [
-		"wickr",
-		"wickrio",
-		"wickrbot",
-		"bot",
-		"bots",
-		"secure",
-		"messaging",
-		"api"
-	],
-	"database": true
+  "name": "wickrio_web_interface",
+  "version": "5.60.3",
+  "description": "WickrIO Node.JS API Web Interface",
+  "main": "./build/index.js",
+  "author": "Paul Cushman (pcushman@wickr.com)",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.6",
+    "@babel/preset-env": "^7.9.6",
+    "fs": "0.0.2",
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "helmet": "^3.20.0",
+    "cron": "^1.7.1",
+    "csv-writer": "^1.5.0",
+    "log4js": "^5.2.1",
+    "pm2": "^3.5.1",
+    "prompt": "^1.0.0",
+    "dotenv": "^8.2.0",
+    "multer": "^1.4.2",
+    "wickrio-bot-api": "5.62.x",
+    "wickrio_addon": "5.60.x"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.10.4",
+    "@babel/core": "^7.10.4",
+    "@babel/node": "^7.10.5",
+    "@babel/plugin-proposal-class-properties": "^7.10.4",
+    "@babel/plugin-proposal-optional-chaining": "^7.10.4",
+    "@babel/plugin-transform-modules-commonjs": "^7.10.4",
+    "@babel/plugin-transform-runtime": "^7.10.4",
+    "@babel/preset-env": "^7.10.4",
+    "@babel/register": "^7.10.4",
+    "babel-eslint": "^10.1.0",
+    "babel-jest": "^26.1.0",
+    "eslint": "^7.4.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-config-standard": "^14.1.1",
+    "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
+    "husky": "^4.2.5",
+    "jest": "^26.1.0",
+    "lint-staged": "^10.2.11",
+    "nodemon": "^2.0.4",
+    "pino-pretty": "^3.5.0",
+    "prettier": "2.0.5",
+    "supertest": "^4.0.2"
+  },
+  "scripts": {
+    "start": "pm2 start processes.json --update-env",
+    "dev": "nodemon --exec 'babel-node --inspect=0.0.0.0 src/index.js'",
+    "build": "rm -rf build && ./node_modules/.bin/babel ./src --out-dir ./build --ignore node_modules",
+    "lint": "eslint src/**/*.js --fix --color",
+    "prettier": "prettier --write ./src/*",
+    "stop": "pm2 delete processes.json"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "./src/**/*.{js,jsx,ts,tsx}": [
+      "npm run prettier",
+      "npm run lint",
+      "npm run build"
+    ]
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverage": true,
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!**/node_modules/**"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/"
+    ]
+  },
+  "prettier": {
+    "semi": false,
+    "arrowParens": "avoid",
+    "singleQuote": true,
+    "jsxBracketSameLine": false
+  },
+  "eslintConfig": {
+    "parser": "babel-eslint",
+    "extends": [
+      "standard",
+      "prettier",
+      "prettier/standard"
+    ],
+    "plugins": [
+      "import",
+      "prettier",
+      "standard"
+    ],
+    "parserOptions": {
+      "ecmaVersion": 2020
+    },
+    "env": {
+      "node": true,
+      "es6": true,
+      "jest": true
+    },
+    "rules": {
+      "space-before-function-paren": "off",
+      "new-cap": "off",
+      "prettier/prettier": "error",
+      "no-var": "error",
+      "prefer-const": "error"
+    }
+  },
+  "babel": {
+    "env": {
+      "test": {
+        "presets": [
+          "@babel/preset-env"
+        ],
+        "plugins": [
+          "@babel/plugin-proposal-optional-chaining",
+          "@babel/plugin-transform-runtime",
+          "@babel/plugin-transform-modules-commonjs",
+          "@babel/plugin-proposal-class-properties"
+        ],
+        "sourceMaps": "inline",
+        "retainLines": true
+      },
+      "production": {
+        "presets": [
+          "@babel/preset-env"
+        ],
+        "plugins": [
+          "@babel/plugin-proposal-optional-chaining",
+          "@babel/plugin-transform-runtime",
+          "@babel/plugin-transform-modules-commonjs",
+          "@babel/plugin-proposal-class-properties"
+        ]
+      },
+      "development": {
+        "presets": [
+          "@babel/preset-env"
+        ],
+        "plugins": [
+          "@babel/plugin-proposal-optional-chaining",
+          "@babel/plugin-transform-runtime",
+          "@babel/plugin-transform-modules-commonjs",
+          "@babel/plugin-proposal-class-properties"
+        ],
+        "sourceMaps": "inline",
+        "retainLines": true
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WickrInc/wickrio_web_interface"
+  },
+  "keywords": [
+    "wickr",
+    "wickrio",
+    "wickrbot",
+    "bot",
+    "bots",
+    "secure",
+    "messaging",
+    "api"
+  ],
+  "database": true
 }
