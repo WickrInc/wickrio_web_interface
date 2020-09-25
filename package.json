@@ -16,7 +16,7 @@
 		"pm2": "^3.5.1",
 		"prompt": "^1.0.0",
 		"dotenv": "^8.2.0",
-		"wickrio-bot-api": "5.54.x",
+		"wickrio-bot-api": "5.64.x",
 		"multer": "^1.4.2",
 		"wickrio_addon": "5.51.x"
 	},
