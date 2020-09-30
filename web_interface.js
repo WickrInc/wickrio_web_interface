@@ -8,6 +8,7 @@ const fs = require("fs")
 const app = express()
 app.use(helmet()) //security http headers
 const multer = require("multer")
+const tar = require("tar")
 
 const bot = new WickrIOBotAPI.WickrIOBot()
 
@@ -1066,6 +1067,101 @@ async function main() {
 		}
 	})
 
+	app.get(endpoint + "/Logs", function (req, res) {
+		var authHeader = req.get("Authorization")
+		var authToken
+		if (authHeader) {
+			if (authHeader.indexOf(" ") == -1) {
+				authToken = authHeader
+			} else {
+				authHeader = authHeader.split(" ")
+				authToken = authHeader[1]
+			}
+		} else {
+			res.set("Authorization", "Basic base64_auth_token")
+			return res
+				.type("txt")
+				.status(401)
+				.send(
+					'Access denied: invalid Authorization Header format. Correct format: "Authorization: Basic base64_auth_token"'
+				)
+		}
+		if (!checkCreds(authToken)) {
+			res.set("Authorization", "Basic base64_auth_token")
+			return res
+				.type("txt")
+				.status(401)
+				.send("Access denied: invalid basic-auth token.")
+		}
+
+		try {
+			var logAndOutputFiles = []
+			const tarFile = 'LogAndOutputFiles.tar'
+			const userAttachments = process.cwd() + "/attachments"
+			const tempDir = userAttachments + '/logs'
+
+			fs.mkdirSync(tempDir, { recursive: true })
+
+
+			const clientLogsDir = process.cwd() + '/../../logs'
+			const serverLogsDir = process.cwd() + '/../../../../logs'
+			if (!fs.existsSync(clientLogsDir)) {
+				console.log('get logs: cannot find:' + clientLogsDir)
+				res.status(400).send('Cannot find:' + clientLogsDir)
+				return
+			}
+
+			// Get the WickrIO client output file
+			const wickrClientOutputFile = 'WickrIO' + bot_username + '.output'
+			const wickrClientOutputPath = clientLogsDir + '/' + wickrClientOutputFile
+			checkForLog( wickrClientOutputFile, wickrClientOutputPath, tempDir, logAndOutputFiles)
+
+			// Get the WickrIO server output file
+			const wickrServerOutputFile = 'WickrIOSvr.output'
+			const wickrServerOutputPath = serverLogsDir + '/' + wickrServerOutputFile
+			checkForLog( wickrServerOutputFile, wickrServerOutputPath, tempDir, logAndOutputFiles)
+
+			// Get the WickrIODebug server output file
+			const wickrServerDebugOutputFile = 'WickrIOSvrDebug.output'
+			const wickrServerDebugOutputPath = serverLogsDir + '/' + wickrServerDebugOutputFile
+			checkForLog( wickrServerDebugOutputFile, wickrServerDebugOutputPath, tempDir, logAndOutputFiles)
+
+			// Get the log.output
+			const integrationLogOutputFile = 'log.output'
+			const integrationLogOutputPath = process.cwd() + '/' + integrationLogOutputFile
+			checkForLog( integrationLogOutputFile, integrationLogOutputPath, tempDir, logAndOutputFiles)
+
+			// Get the err.output
+			const integrationErrOutputFile = 'err.output'
+			const integrationErrOutputPath = process.cwd() + '/' + integrationErrOutputFile
+			checkForLog( integrationErrOutputFile, integrationErrOutputPath, tempDir, logAndOutputFiles)
+
+			// If there are not logs/output files found then return error
+			if (logAndOutputFiles.length === 0) {
+				console.log('get logs: there are not log or output files!')
+				res.status(400).send('Cannot find any log or output files')
+				return
+			}
+
+			/*
+			 * Create a tar with all the log/output files in it
+			 */
+			tar.c( { file: tarFile, cwd: tempDir, sync: true }, logAndOutputFiles)
+
+			const stat = fs.statSync(tarFile)
+			res.writeHead(200, {
+				'Content-Type': 'application/x-tar',
+				'Content-Length': stat.size
+			});
+			var readStream = fs.createReadStream(tarFile);
+			readStream.pipe(res);
+		} catch (err) {
+			console.log(err)
+			res.statusCode = 400
+			res.type("txt").send(err.toString())
+		}
+	})
+
 	// What to do for ALL requests for ALL Paths
 	// that are not handled above
 	app.all("*", function (req, res) {
@@ -1111,6 +1207,16 @@ function isJson(str) {
 		return false
 	}
 	return str
+}
+
+function checkForLog(fileName, pathName, destDir, list) {
+	if (!fs.existsSync(pathName)) {
+		console.log('get logs: cannot find:' + pathName)
+	} else {
+		const newOutput = destDir + '/' + fileName
+		list.push(fileName)
+		fs.copyFileSync(pathName, newOutput)
+	}
 }
 
 main()
