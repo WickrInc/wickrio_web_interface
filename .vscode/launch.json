@@ -1,0 +1,45 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "diagnosticLogging": true,
+  "configurations": [
+    {
+      "name": "Develop",
+      "type": "pwa-node",
+      "request": "launch",
+      // "protocol": "inspector",
+      "program": "${workspaceRoot}/src/broadcast-bot.js",
+      "stopOnEntry": false,
+      "cwd": "${workspaceRoot}",
+      "preLaunchTask": null,
+      "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/nodemon",
+      // "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/babel-node",
+      "args": ["${workspaceRoot}/src/broadcast-bot.js"],
+      "runtimeArgs": ["--nolazy", "--require", "@babel/register"],
+      "env": {
+        // "tokens": "{\"WICKRIO_BOT_NAME\": { \"value\": \"localtestrecorderbot\" }}",
+        "NODE_ENV": "development"
+      },
+      "console": "internalConsole",
+      "sourceMaps": true,
+      "outFiles": []
+    },
+    {
+      "name": "Debug Jest Tests",
+      "type": "pwa-node",
+      "request": "launch",
+      "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/nodemon",
+      "runtimeArgs": [
+        "--inspect-brk",
+        "${workspaceRoot}/node_modules/.bin/jest",
+        "--runInBand"
+      ],
+      "console": "integratedTerminal",
+      // "console": "internalConsole",
+      "internalConsoleOptions": "neverOpen",
+      "port": 9229
+    }
+  ]
+}
