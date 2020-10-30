@@ -50,8 +50,8 @@ async function main()
             type: 'number',
             description: "Please enter your client bot's port",
             message: 'Cannot leave empty! Please enter a value',
-            required: false,
-            default: 'N/A',
+            required: true,
+            default: '',
         },
         {
             token: 'BOT_API_KEY',
@@ -60,7 +60,7 @@ async function main()
             description: "Please enter your client bot's API-Key",
             message: 'Cannot leave empty! Please enter a value',
             required: true,
-            default: 'N/A',
+            default: '',
         },
         {
             token: 'BOT_API_AUTH_TOKEN',
@@ -69,7 +69,7 @@ async function main()
             description: 'Please create an Web API Basic Authorization Token, we recommend an alphanumeric string with at least 24 characters',
             message: 'Cannot leave empty! Please enter a value',
             required: true,
-            default: 'N/A',
+            default: '',
         },
         {
             token: 'HTTPS_CHOICE',
@@ -87,7 +87,7 @@ async function main()
                     description: 'Please enter the name and location of your SSL .key file',
                     message: 'Cannot find file!',
                     required: true,
-                    default: 'N/A',
+                    default: '',
                 },
                 {
                     token: 'SSL_CRT_LOCATION',
@@ -96,7 +96,7 @@ async function main()
                     description: 'Please enter the name and location of your SSL .crt file',
                     message: 'Cannot find file!',
                     required: true,
-                    default: 'N/A',
+                    default: '',
                 }
             ]
         }
