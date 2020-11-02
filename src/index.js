@@ -4,14 +4,14 @@ import https from 'https'
 import bodyParser from 'body-parser'
 import helmet from 'helmet'
 import * as WickrIOAPI from 'wickrio_addon'
-import WickrIOBotAPI from 'wickr-bot-api'
+import { BotAPI } from 'wickr-bot-api'
 import fs from 'fs'
 import multer from 'multer'
 
 const app = express()
 app.use(helmet()) // security http headers
 
-const bot = new WickrIOBotAPI.WickrIOBot()
+const bot = new BotAPI()
 
 process.title = 'wickrioWebApi'
 process.stdin.resume() // so the program will not close instantly
