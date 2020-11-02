@@ -8,9 +8,9 @@
             "pattern": "^((6553[0-5])|(655[0-2][0-9])|(65[0-4][0-9]{2})|(6[0-4][0-9]{3})|([1-5][0-9]{4})|([0-5]{0,5})|([0-9]{1,4}))$",
             "type": "port",
             "description": "Please enter your client bot's port",
-            "message": "Cannot leave empty! Please enter a value",
-            "required": false,
-            "default": "N/A"
+            "message": "Please enter a valid port number",
+            "required": true,
+            "default": ""
         },
         {
             "token": "BOT_API_KEY",
@@ -19,7 +19,7 @@
             "description": "Please enter your client bot's API-Key",
             "message": "Cannot leave empty! Please enter a value",
             "required": true,
-            "default": "N/A"
+            "default": ""
         },
         {
             "token": "BOT_API_AUTH_TOKEN",
@@ -28,7 +28,7 @@
             "description": "Please create an Web API Basic Authorization Token, we recommend an alphanumeric string with at least 24 characters",
             "message": "Cannot leave empty! Please enter a value",
             "required": true,
-            "default": "N/A"
+            "default": ""
         },
         {
             "token": "HTTPS_CHOICE",
@@ -46,7 +46,7 @@
                     "description": "Please enter the name and location of your SSL .key file",
                     "message": "Cannot find file!",
                     "required": true,
-                    "default": "N/A"
+                    "default": ""
                 },
                 {
                     "token": "SSL_CRT_LOCATION",
@@ -55,7 +55,7 @@
                     "description": "Please enter the name and location of your SSL .crt file",
                     "message": "Cannot find file!",
                     "required": true,
-                    "default": "N/A"
+                    "default": ""
                 }
             ]
         }
