@@ -3,7 +3,6 @@ import express from 'express'
 import https from 'https'
 import bodyParser from 'body-parser'
 import helmet from 'helmet'
-import * as WickrIOAPI from 'wickrio_addon'
 import { BotAPI } from 'wickr-bot-api'
 import fs from 'fs'
 import multer from 'multer'
@@ -13,9 +12,9 @@ app.use(helmet()) // security http headers
 
 const bot = new BotAPI()
 
-process.title = 'wickrioWebApi'
-process.stdin.resume() // so the program will not close instantly
-process.setMaxListeners(0)
+// process.title = 'wickrioWebApi'
+// process.stdin.resume() // so the program will not close instantly
+// process.setMaxListeners(0)
 
 async function exitHandler(options, err) {
   try {
@@ -31,15 +30,15 @@ async function exitHandler(options, err) {
   }
 }
 
-// catches ctrl+c and stop.sh events
-process.on('SIGINT', exitHandler.bind(null, { exit: true }))
+// // catches ctrl+c and stop.sh events
+// process.on('SIGINT', exitHandler.bind(null, { exit: true }))
 
-// catches "kill pid" (for example: nodemon restart)
-process.on('SIGUSR1', exitHandler.bind(null, { pid: true }))
-process.on('SIGUSR2', exitHandler.bind(null, { pid: true }))
+// // catches "kill pid" (for example: nodemon restart)
+// process.on('SIGUSR1', exitHandler.bind(null, { pid: true }))
+// process.on('SIGUSR2', exitHandler.bind(null, { pid: true }))
 
-// catches uncaught exceptions
-process.on('uncaughtException', exitHandler.bind(null, { exit: true }))
+// // catches uncaught exceptions
+// process.on('uncaughtException', exitHandler.bind(null, { exit: true }))
 
 let bot_username,
   bot_port,
@@ -50,6 +49,7 @@ let bot_username,
   https_choice
 
 async function main() {
+  const WickrIOAPI = bot.getWickrIOAddon()
   const tokens = JSON.parse(process.env.tokens)
   try {
     const status = await bot.start(tokens.WICKRIO_BOT_NAME.value)
