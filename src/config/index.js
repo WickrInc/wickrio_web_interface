@@ -1,4 +1,4 @@
-import { ConfigBot } from 'wickrio-bot-api'
+import { ConfigBot } from 'wickrio-toolbox'
 import dotenv from 'dotenv'
 dotenv.config()
 

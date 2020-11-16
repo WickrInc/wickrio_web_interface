@@ -3,7 +3,7 @@ import express from 'express'
 import https from 'https'
 import bodyParser from 'body-parser'
 import helmet from 'helmet'
-import { BotAPI } from 'wickr-bot-api'
+import { BotAPI } from 'wickrio-toolbox'
 import fs from 'fs'
 import multer from 'multer'
 
