@@ -611,6 +611,35 @@ async function main() {
 		res.end()
 	})
 
+	app.delete(endpoint + "/Messages/:vGroupID/:messageID", function (req, res) {
+		var vGroupID = req.params.vGroupID
+		var msgID = req.params.messageID
+
+		var doRecall = req.query.dorecall ? req.query.dorecall : "false"
+		if (doRecall === "true") {
+			try {
+				var cdr = WickrIOAPI.cmdSendRecallMessage(vGroupID, msgID)
+				console.log("cmdSendRecallMessage:", cdr)
+				res.send("Recall message sent")
+			} catch (err) {
+				console.log(err)
+				res.statusCode = 400
+				res.type("txt").send(err.toString())
+			}
+		} else {
+			try {
+				var clr = WickrIOAPI.cmdSendDeleteMessage(vGroupID, msgID)
+				console.log("cmdSendDeleteMessage:", clr)
+				res.send("Delete message sent")
+			} catch (err) {
+				console.log(err)
+				res.statusCode = 400
+				res.type("txt").send(err.toString())
+			}
+		}
+		res.end()
+	})
+
 	app.post(endpoint + "/MsgRecvCallback", function (req, res) {
 		var callbackUrl = req.query.callbackurl
 		console.log("callbackUrl:", callbackUrl)
