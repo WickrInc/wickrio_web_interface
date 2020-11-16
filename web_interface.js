@@ -152,7 +152,7 @@ async function main() {
 				.type("txt")
 				.status(401)
 				.send("Access denied: invalid basic-auth token.")
-		} else {
+		}
 
 		next()
 	})
