@@ -37,9 +37,27 @@
   "runArgs": ["-v", "/var/run/docker.sock:/var/run/docker.sock"],
 
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  "forwardPorts": [8000, 4545, 9229],
+  "forwardPorts": [8000, 3001, 4545, 9229],
+  "remoteEnv": {
+    "BOT_INTEGRATIONNAME": "wickrio-recorder-bot",
+    "BOT_CLIENTNAME": "localrecordertestbot",
+    "BOT_PASSWORD": "password"
+  },
   // Specifies a command that should be run after the container has been created.
-  "postCreateCommand": "npm install"
+  // "postCreateCommand": "{echo 'yes'; echo 'add'; } | /home/ubuntu/start.sh"
+  "postCreateCommand": "ps -p $$ \
+  && { \
+    echo 'yes'; \
+    echo 'add'; \
+    echo ${BOT_CLIENTNAME}; \
+    echo ${BOT_PASSWORD}; \
+    echo 'yes'; \
+    echo 'search'; \
+    echo 'wickrio-basic-bot'; \
+    echo 'wickrio-basic-bot'; \
+  } | /home/ubuntu/start.sh \
+  && rm -rf /opt/WickrIODebug/clients/${BOT_CLIENTNAME}/integration/wickrio-basic-bot "
+
   // Comment out the next line to run as root instead.
   // "remoteUser": "ubuntu"
   // "remoteUser": "node"

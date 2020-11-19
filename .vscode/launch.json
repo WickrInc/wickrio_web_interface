@@ -6,35 +6,26 @@
   "diagnosticLogging": true,
   "configurations": [
     {
-      "name": "Develop",
-      "type": "pwa-node",
+      "name": "Debug",
+      "type": "node",
       "request": "launch",
-      // "protocol": "inspector",
-      "program": "${workspaceRoot}/src/broadcast-bot.js",
-      "stopOnEntry": false,
-      "cwd": "${workspaceRoot}",
-      "preLaunchTask": null,
       "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/nodemon",
-      // "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/babel-node",
-      "args": ["${workspaceRoot}/src/broadcast-bot.js"],
-      "runtimeArgs": ["--nolazy", "--require", "@babel/register"],
-      "env": {
-        // "tokens": "{\"WICKRIO_BOT_NAME\": { \"value\": \"localtestrecorderbot\" }}",
-        "NODE_ENV": "development"
-      },
-      "console": "internalConsole",
-      "sourceMaps": true,
-      "outFiles": []
+      "runtimeArgs": ["--inspect-brk"],
+      "console": "integratedTerminal",
+      // "console": "internalConsole",
+      "internalConsoleOptions": "neverOpen",
+      "port": 9229
     },
     {
       "name": "Debug Jest Tests",
-      "type": "pwa-node",
+      "type": "node",
       "request": "launch",
       "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/nodemon",
       "runtimeArgs": [
         "--inspect-brk",
         "${workspaceRoot}/node_modules/.bin/jest",
-        "--runInBand"
+        "--runInBand",
+        "--detectOpenHandles"
       ],
       "console": "integratedTerminal",
       // "console": "internalConsole",
