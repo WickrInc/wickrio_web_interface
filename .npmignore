@@ -1,0 +1,15 @@
+node_modules
+coverage
+*-lock.json
+package-lock.json
+src
+exclude-list.txt
+sync.sh
+*.output
+processes_backup.json
+.DS_Store
+histories
+mysql_move_data.log
+mysqld.cnf
+.env
+users.txt

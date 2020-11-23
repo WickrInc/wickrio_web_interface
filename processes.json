@@ -1,20 +1,18 @@
 {
-  "apps": [{
-    "name": "WickrIO-Web-Interface",
-    "args": [],
-    "script": "node web_interface.js",
-    "exec_interpreter": "none",
-    "autorestart": false,
-    "watch": [
-      "package.json"
-    ],
-    "ignore_watch": [
-      ".git"
-    ],
-    "env": {
-      "tokens": {}
-    },
-    "out_file": "log.output",
-    "error_file": "err.output"
-  }]
+	"apps": [
+		{
+			"name": "WickrIO-Web-Interface",
+			"args": [],
+			"script": "./build/index.js",
+			"exec_interpreter": "node",
+			"autorestart": false,
+			"watch": ["package.json"],
+			"ignore_watch": [".git"],
+			"env": {
+				"tokens": {}
+			},
+			"out_file": "log.output",
+			"error_file": "err.output"
+		}
+	]
 }

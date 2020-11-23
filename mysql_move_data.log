@@ -1,0 +1,7 @@
+ * Stopping MySQL database server mysqld
+   ...done.
+Moving the MySQL data to /opt/WickrIODebug/database/mysqldata
+ * Stopping MySQL database server mysqld
+   ...done.
+ * Starting MySQL database server mysqld
+   ...done.
