@@ -17,7 +17,8 @@
 		"prompt": "^1.0.0",
 		"dotenv": "^8.2.0",
 		"wickrio-bot-api": "5.76.x",
-		"multer": "^1.4.2"
+		"multer": "^1.4.2",
+		"tar": "^6.0.5"
 	},
 	"scripts": {
 		"start": "pm2 start processes.json --update-env",
