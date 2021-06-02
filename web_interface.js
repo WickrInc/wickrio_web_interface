@@ -47,6 +47,7 @@ var bot_username,
 	ssl_crt_location
 
 async function main() {
+  bot.processesJsonToProcessEnv()
 	try {
 		var tokens = JSON.parse(process.env.tokens)
 		var status = await bot.start(tokens.WICKRIO_BOT_NAME.value)
