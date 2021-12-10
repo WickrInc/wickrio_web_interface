@@ -1,6 +1,6 @@
 {
 	"name": "wickrio_web_interface",
-	"version": "5.82.2",
+	"version": "5.92.1",
 	"description": "WickrIO Node.JS API Web Interface",
 	"main": "web_interface.js",
 	"author": "Paul Cushman (pcushman@wickr.com)",
@@ -12,7 +12,6 @@
 		"helmet": "^3.20.0",
 		"cron": "^1.7.1",
 		"csv-writer": "^1.5.0",
-		"log4js": "^5.2.1",
 		"prompt": "^1.0.0",
 		"dotenv": "^8.2.0",
 		"wickrio-bot-api": "5.82.x",
