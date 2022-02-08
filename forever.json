@@ -3,8 +3,5 @@
   "append": true,
   "watch": false,
   "script": "./web_interface.js",
-  "sourceDir": "",
-  "logFile": "",
-  "outFile": "",
-  "errFile": ""
+  "sourceDir": ""
 }

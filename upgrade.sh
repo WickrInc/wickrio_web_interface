@@ -40,6 +40,12 @@ cp -f client_bot_info.txt processes.json $NEW_BOT_LOCATION
 set -e
 
 #
+# Copy the log files to the new software location
+#
+set +e
+cp -rf logs $NEW_BOT_LOCATION
+set -e
+#
 # Move the OLD installation to a saved directory
 # Remove a previous one if necessary
 #
