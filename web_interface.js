@@ -5,7 +5,9 @@ const helmet = require("helmet")
 const WickrIOAPI = require("wickrio_addon")
 const WickrIOBotAPI = require("wickrio-bot-api")
 const fs = require("fs")
+const os = require("os")
 const app = express()
+const logger = require("./logger")
 app.use(helmet()) //security http headers
 const multer = require("multer")
 
@@ -19,13 +21,13 @@ async function exitHandler(options, err) {
 	try {
 		var closed = await bot.close()
 		if (err || options.exit) {
-			console.log("Exit reason:", err)
+			logger.info("Exit reason:", err)
 			process.exit()
 		} else if (options.pid) {
 			process.kill(process.pid)
 		}
 	} catch (err) {
-		console.log(err)
+		logger.error(err)
 	}
 }
 
@@ -58,7 +60,7 @@ async function main() {
 			})
 		}
 	} catch (err) {
-		console.log(err)
+		logger.error(err)
 	}
 
 	bot.setAdminOnly(false)
@@ -69,9 +71,11 @@ async function main() {
 	bot_api_auth_token = tokens.BOT_API_AUTH_TOKEN.value
 	https_choice = tokens.HTTPS_CHOICE.value
 
-	console.log("bot_username=" + bot_username)
-	console.log("bot_port=" + bot_port)
-	console.log("https_choice=" + https_choice)
+	logger.info("bot_username=" + bot_username)
+	logger.info("bot_port=" + bot_port)
+	logger.info("https_choice=" + https_choice)
+
+  logger.verbose(os.networkInterfaces())
 
 	if (https_choice === "yes" || https_choice === "y") {
 		ssl_key_location = tokens.SSL_KEY_LOCATION.value
