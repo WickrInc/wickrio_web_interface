@@ -1,7 +1,6 @@
-const { WickrLogger } = require('wickrio-bot-api')
 const util = require('util')
 
-const logger = new WickrLogger().getLogger()
+const logger = require('wickrio-bot-api').logger
 
 console.log = function () {
   logger.info(util.format.apply(null, arguments))
