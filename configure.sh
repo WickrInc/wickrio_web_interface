@@ -35,7 +35,7 @@ fi
 
 if [ -f "/usr/local/nvm/nvm.sh" ]; then
   . /usr/local/nvm/nvm.sh
-  nvm use 12.20.2
+  nvm use 16
 fi
 
 if [ -z "$CLIENT_NAME" ];
