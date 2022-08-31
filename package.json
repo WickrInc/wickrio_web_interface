@@ -1,27 +1,27 @@
 {
 	"name": "wickrio_web_interface",
-	"version": "5.116.1",
+	"version": "5.116.2",
 	"description": "WickrIO Node.JS API Web Interface",
 	"main": "web_interface.js",
 	"author": "Paul Cushman (pcushman@wickr.com)",
 	"license": "ISC",
 	"dependencies": {
-		"fs": "0.0.2",
 		"body-parser": "^1.19.0",
-		"express": "^4.17.1",
-		"helmet": "^3.20.0",
 		"cron": "^1.7.1",
 		"csv-writer": "^1.5.0",
-		"log4js": "^5.2.1",
-		"prompt": "^1.0.0",
 		"dotenv": "^8.2.0",
-		"wickrio-bot-api": "5.113.x",
-		"multer": "^1.4.2"
+		"express": "^4.17.1",
+		"fs": "0.0.2",
+		"helmet": "^3.20.0",
+		"log4js": "^6.6.1",
+		"multer": "^1.4.2",
+		"prompt": "^1.0.0",
+		"wickrio-bot-api": "5.113.x"
 	},
 	"scripts": {
-    "start": "forever start -m 5 ./forever.json",
-    "stop": "forever stopall",
-    "restart": "forever restartall"
+		"start": "forever start -m 5 ./forever.json",
+		"stop": "forever stopall",
+		"restart": "forever restartall"
 	},
 	"repository": {
 		"type": "git",
