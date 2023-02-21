@@ -1,7 +1,7 @@
 {
   "apps" : [{
     "name": "WickrIO-Web-Interface-Bot",
-    "script": "./build/index.js",
+    "script": "./web_interface.js",
     "instances": 1,
     "max_memory_restart": "128M",
     "node_args": ["--nouse-idle-notification"],
