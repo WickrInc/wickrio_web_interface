@@ -1,7 +1,0 @@
-{
-  "uid": "wickrio_web_interface",
-  "append": true,
-  "watch": false,
-  "script": "./web_interface.js",
-  "sourceDir": ""
-}

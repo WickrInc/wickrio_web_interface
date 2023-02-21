@@ -1,6 +1,6 @@
 {
 	"name": "wickrio_web_interface",
-	"version": "5.116.2",
+	"version": "6.8.1",
 	"description": "WickrIO Node.JS API Web Interface",
 	"main": "web_interface.js",
 	"author": "Paul Cushman (pcushman@wickr.com)",
@@ -16,12 +16,12 @@
 		"log4js": "^6.6.1",
 		"multer": "^1.4.2",
 		"prompt": "^1.0.0",
-		"wickrio-bot-api": "5.113.x"
+		"wickrio-bot-api": "6.8.x"
 	},
 	"scripts": {
-		"start": "forever start -m 5 ./forever.json",
-		"stop": "forever stopall",
-		"restart": "forever restartall"
+    "start": "wpm2 start ./wpm.json --pidfile $(cat pidLocation.json)",
+    "stop": "kill $(cat $(cat pidLocation.json))",
+    "restart": "kill $(cat $(cat pidLocation.json)) && wpm2 start ./wpm.json --pidfile $(cat pidLocation.json)"
 	},
 	"repository": {
 		"type": "git",
