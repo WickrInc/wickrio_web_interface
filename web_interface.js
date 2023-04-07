@@ -215,8 +215,13 @@ async function main() {
 				}
 			} else {
 				var message = req.body.message
+        https://t.corp.amazon.com/V864312162
+        let messagemeta = {}
+        if (req.body.buttons) {
+          messagemeta = ButtonHelper.makeYesNoButton(0)
+        }
 				try {
-					var csm = WickrIOAPI.cmdSend1to1Message(users, message, ttl, bor)
+					var csm = WickrIOAPI.cmdSend1to1Message(users, message, ttl, bor, messagemeta)
 					console.log(csm)
 					res.send(csm)
 				} catch (err) {
@@ -282,79 +287,7 @@ async function main() {
 	app.post(endpoint + "/File", upload.single("attachment"), function (
 		req,
 		res
-	) {
-		res.set("Content-Type", "text/plain")
-		res.set("Authorization", "Basic base64_auth_token")
-
-		if (!req.body.users && !req.body.vgroupid) {
-			return res.send("Need a list of users OR a vGroupID to send a message.")
-		} else {
-			var userAttachments
-			var userNewFile
-			var inFile
-			let { ttl = "", bor = "" } = req.body
-			if (req.file === undefined) {
-				console.log("attachment is not defined!")
-				return
-			} else {
-				userAttachments = process.cwd() + "/attachments"
-				userNewFile = userAttachments + "/" + req.file.originalname
-
-				inFile = process.cwd() + "/attachments/" + req.file.filename
-
-				fs.mkdirSync(userAttachments, { recursive: true })
-				if (fs.existsSync(userNewFile)) fs.unlinkSync(userNewFile)
-				// userAttachments = process.cwd() + '/attachments/' + req.user.email;
-				fs.renameSync(inFile, userNewFile)
-				console.log({ inFile, userNewFile })
-
-				if (req.body.vgroupid) {
-					try {
-						var csra = WickrIOAPI.cmdSendRoomAttachment(
-							req.body.vgroupid,
-							userNewFile,
-							req.file.originalname,
-							ttl,
-							bor
-						)
-						res.send(csra)
-					} catch (err) {
-						console.log(err)
-							res.statusCode = 400
-						res.send(err.toString())
-					}
-				} else if (req.body.users) {
-					// userAttachments = process.cwd() + '/attachments/' + req.user.email;
-					console.log({ bodyusers: req.body.users })
-					var users = []
-					try {
-						for (let user of JSON.parse(req.body.users)) {
-							users.push(user)
-						}
-					} catch (err) {
-						console.log(err)
-						res.statusCode = 400
-						res.send('error processing users JSON data')
-					}
-
-					try {
-						let reply = WickrIOAPI.cmdSend1to1Attachment(
-							users,
-							userNewFile,
-							req.file.originalname,
-							ttl,
-							bor
-						)
-						res.send(reply)
-					} catch (err) {
-						console.log(err)
-						res.statusCode = 400
-						res.send('error sending attachment!')
-					}
-				}
-			}
-		}
-	})
+	) { postFile(req, res) })
 
 	app.get(endpoint + "/Statistics", function (req, res) {
 		try {
@@ -727,6 +660,84 @@ function isJson(str) {
 		return false
 	}
 	return str
+}
+
+function postFile{
+  res.set("Content-Type", "text/plain")
+  res.set("Authorization", "Basic base64_auth_token")
+
+  if (!req.body.users && !req.body.vgroupid) {
+    return res.send("Need a list of users OR a vGroupID to send a message.")
+  } else {
+    var userAttachments
+    var userNewFile
+    var inFile
+    let { ttl = "", bor = "" } = req.body
+    if (req.file === undefined) {
+      console.log("attachment is not defined!")
+      return
+    } else {
+      userAttachments = process.cwd() + "/attachments"
+      userNewFile = userAttachments + "/" + req.file.originalname
+
+      inFile = process.cwd() + "/attachments/" + req.file.filename
+
+      fs.mkdirSync(userAttachments, { recursive: true })
+      if (fs.existsSync(userNewFile)) fs.unlinkSync(userNewFile)
+      // userAttachments = process.cwd() + '/attachments/' + req.user.email;
+      fs.renameSync(inFile, userNewFile)
+      console.log({ inFile, userNewFile })
+
+      if (req.body.vgroupid) {
+        try {
+          var csra = WickrIOAPI.cmdSendRoomAttachment(
+            req.body.vgroupid,
+            userNewFile,
+            req.file.originalname,
+            ttl,
+            bor
+          )
+          res.send(csra)
+        } catch (err) {
+          console.log(err)
+            res.statusCode = 400
+          res.send(err.toString())
+        }
+      } else if (req.body.users) {
+        // userAttachments = process.cwd() + '/attachments/' + req.user.email;
+        console.log({ bodyusers: req.body.users })
+        var users = []
+        try {
+          for (let user of JSON.parse(req.body.users)) {
+            users.push(user)
+          }
+        } catch (err) {
+          console.log(err)
+          res.statusCode = 400
+          res.send('error processing users JSON data')
+        }
+
+        try {
+          let reply = WickrIOAPI.cmdSend1to1Attachment(
+            users,
+            userNewFile,
+            req.file.originalname,
+            ttl,
+            bor
+          )
+          res.send(reply)
+        } catch (err) {
+          console.log(err)
+          res.statusCode = 400
+          res.send('error sending attachment!')
+        }
+      }
+    }
+  }
+}
+
+function buttonMessage(req, res) {
+
 }
 
 main()
