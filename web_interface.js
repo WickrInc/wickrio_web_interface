@@ -163,6 +163,13 @@ async function main() {
 	})
 
 	var endpoint = "/WickrIO/V1/Apps/" + bot_api_key
+  const xapiEndpoint = "/WickrIO/V2/Apps/"
+
+  app.use(xapiEndpoint, function(req, res, next) {
+    req.addHeader("x-api-key", bot_api_key);
+    next()
+  })
+
 	var upload = multer({ dest: "attachments/" })
 
 	app.post(endpoint + "/Messages", function (req, res) {
@@ -356,26 +363,26 @@ async function main() {
 		}
 	})
 
-	app.get(endpoint + "/Statistics", function (req, res) {
-		try {
-			var statistics = WickrIOAPI.cmdGetStatistics()
-			var response = isJson(statistics)
-			if (response !== false) {
-				statistics = response
-			}
-			if (statistics.statistics) {
-				res.set("Content-Type", "application/json")
-				res.send(statistics)
-			}
-			console.log(statistics)
-		} catch (err) {
-			console.log(err)
-			res.statusCode = 400
-			res.type("txt").send(err.toString())
-		}
-	})
+	app.route([xapiEndpoint + "/Statistics", endpoint + "/Statistics"]).get(function (req, res) {
+      try {
+        var statistics = WickrIOAPI.cmdGetStatistics()
+        var response = isJson(statistics)
+        if (response !== false) {
+          statistics = response
+        }
+        if (statistics.statistics) {
+          res.set("Content-Type", "application/json")
+          res.send(statistics)
+        }
+        console.log(statistics)
+      } catch (err) {
+        console.log(err)
+        res.statusCode = 400
+        res.type("txt").send(err.toString())
+      }
+  })
 
-	app.delete(endpoint + "/Statistics", function (req, res) {
+	app.route([xapiEndpoint + "/Statistics", endpoint + "/Statistics"]).delete(function (req, res) {
 		res.set("Content-Type", "text/plain")
 		try {
 			var cleared = WickrIOAPI.cmdClearStatistics()
@@ -388,7 +395,7 @@ async function main() {
 		}
 	})
 
-	app.post(endpoint + "/Rooms", function (req, res) {
+	app.route([xapiEndpoint + "/Rooms", endpoint + "/Rooms"]).post(function (req, res) {
 		if (!req.body.room) {
 			return res
 				.type("txt")
@@ -436,7 +443,7 @@ async function main() {
 		}
 	})
 
-	app.get(endpoint + "/Rooms/:vGroupID", function (req, res) {
+	app.route([xapiEndpoint + "/Rooms", endpoint + "/Rooms"]).get(function (req, res) {
 		res.set("Content-Type", "application/json")
 		var vGroupID = req.params.vGroupID
 		try {
@@ -449,7 +456,7 @@ async function main() {
 		}
 	})
 
-	app.get(endpoint + "/Rooms", function (req, res) {
+	app.route([xapiEndpoint + "/Rooms", endpoint + "/Rooms"]).get(function (req, res) {
 		try {
 			var cgr = WickrIOAPI.cmdGetRooms()
 			res.type("json").send(cgr)
@@ -460,7 +467,7 @@ async function main() {
 		}
 	})
 
-	app.delete(endpoint + "/Rooms/:vGroupID", function (req, res) {
+	app.route([xapiEndpoint + "/Rooms/:vGroupID", endpoint + "/Rooms/:vGroupID"]).delete(function (req, res) {
 		var vGroupID = req.params.vGroupID
 		var reason = req.query.reason
 		if (reason === "leave") {
@@ -488,7 +495,7 @@ async function main() {
 	})
 
 	//ModifyRoom
-	app.post(endpoint + "/Rooms/:vGroupID", function (req, res) {
+	app.route([xapiEndpoint + "/Rooms/:vGroupID", endpoint + "/Rooms/:vGroupID"]).post(function (req, res) {
 		var vGroupID = req.params.vGroupID
 		if (typeof vGroupID !== "string")
 			return res.send("vGroupID must be a string.")
@@ -531,7 +538,7 @@ async function main() {
 		}
 	})
 
-	app.post(endpoint + "/GroupConvo", function (req, res) {
+	app.route([xapiEndpoint + "/GroupConvo", endpoint + "/GroupConvo"]).post(function (req, res) {
 		var groupconvo = req.body.groupconvo
 		if (!groupconvo.members)
 			return res.send("An array of GroupConvo members is required")
@@ -554,7 +561,7 @@ async function main() {
 		}
 	})
 
-	app.get(endpoint + "/GroupConvo", function (req, res) {
+	app.route([xapiEndpoint + "/GroupConvo", endpoint + "/GroupConvo"]).get(function (req, res) {
 		try {
 			var cggc = WickrIOAPI.cmdGetGroupConvos()
 			res.type("json").send(cggc)
@@ -565,7 +572,7 @@ async function main() {
 		}
 	})
 
-	app.get(endpoint + "/GroupConvo/:vGroupID", function (req, res) {
+	app.route([xapiEndpoint + "/GroupConvo/:vGroupID", endpoint + "/GroupConvo/:vGroupID"]).get(function (req, res) {
 		var vGroupID = req.params.vGroupID
 		try {
 			var cggc = WickrIOAPI.cmdGetGroupConvo(vGroupID)
