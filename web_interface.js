@@ -189,8 +189,11 @@ async function main() {
 		}
 		var ttl = "",
 			bor = ""
+    let messagemeta = {}
 		if (req.body.ttl) ttl = req.body.ttl.toString()
 		if (req.body.bor) bor = req.body.bor.toString()
+
+    if (req.body.messagemeta) messagemeta = JSON.stringify(req.body.messagemeta)
 		if (req.body.users) {
 			var users = []
 			for (var i in req.body.users) {
@@ -229,7 +232,7 @@ async function main() {
 			} else {
 				var message = req.body.message
 				try {
-					var csm = WickrIOAPI.cmdSend1to1Message(users, message, ttl, bor)
+					var csm = WickrIOAPI.cmdSend1to1Message(users, message, ttl, bor, '', [], messagemeta)
 					console.log(csm)
 					res.send(csm)
 				} catch (err) {
@@ -279,7 +282,10 @@ async function main() {
 						vGroupID,
 						message,
 						ttl,
-						bor
+						bor,
+            '',
+            [],
+            messagemeta
 					)
 					console.log(csrm)
 					res.send(csrm)
