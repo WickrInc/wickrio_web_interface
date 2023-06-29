@@ -193,7 +193,10 @@ async function main() {
 		if (req.body.ttl) ttl = req.body.ttl.toString()
 		if (req.body.bor) bor = req.body.bor.toString()
 
-    if (req.body.messagemeta) messagemeta = JSON.stringify(req.body.messagemeta)
+    if (req.body.messagemeta)
+        messagemeta = JSON.stringify(req.body.messagemeta)
+    else
+        messagemeta = ""
 		if (req.body.users) {
 			var users = []
 			for (var i in req.body.users) {
