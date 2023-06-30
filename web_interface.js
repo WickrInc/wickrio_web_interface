@@ -458,20 +458,33 @@ async function main() {
 	app.route([xapiEndpoint + "/Rooms", endpoint + "/Rooms"]).get(function (req, res) {
 		res.set("Content-Type", "application/json")
 		var vGroupID = req.params.vGroupID
-		try {
-			var cgr = WickrIOAPI.cmdGetRoom(vGroupID)
-			res.send(cgr)
-		} catch (err) {
-			console.log(err)
-			res.statusCode = 400
-			res.type("txt").send(err.toString())
+		if (vGroupID === undefined) {
+			try {
+				var cgr = WickrIOAPI.cmdGetRooms()
+				res.type("json").send(cgr)
+			} catch (err) {
+				console.log(err)
+				res.statusCode = 400
+				res.type("txt").send(err.toString())
+			}
+		} else {
+			try {
+				var cgr = WickrIOAPI.cmdGetRoom(vGroupID)
+				res.send(cgr)
+			} catch (err) {
+				console.log(err)
+				res.statusCode = 400
+				res.type("txt").send(err.toString())
+			}
 		}
 	})
 
-	app.route([xapiEndpoint + "/Rooms", endpoint + "/Rooms"]).get(function (req, res) {
+	app.route([xapiEndpoint + "/Rooms/:vGroupID", endpoint + "/Rooms/:vGroupID"]).get(function (req, res) {
+		res.set("Content-Type", "application/json")
+		var vGroupID = req.params.vGroupID
 		try {
-			var cgr = WickrIOAPI.cmdGetRooms()
-			res.type("json").send(cgr)
+			var cgr = WickrIOAPI.cmdGetRoom(vGroupID)
+			res.send(cgr)
 		} catch (err) {
 			console.log(err)
 			res.statusCode = 400
