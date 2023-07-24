@@ -354,6 +354,7 @@ async function main() {
 						console.log(err)
 						res.statusCode = 400
 						res.send('error processing users JSON data')
+						return
 					}
 
 					try {
