@@ -178,7 +178,7 @@ async function main() {
 
 	var upload = multer({ dest: "attachments/" })
 
-	app.route([xapiEndpoint + "/Messages", endpoint + "/Messages"]).post(function (req, res) {
+	app.route([xapiEndpoint + "/Messages", endpoint + "/Messages"]).post(async function (req, res) {
 		res.set("Content-Type", "text/plain")
 		res.set("Authorization", "Basic base64_auth_token")
 
@@ -219,7 +219,7 @@ async function main() {
 				}
 				console.log("displayName:", displayName)
 				try {
-					var s1t1a = WickrIOAPI.cmdSend1to1Attachment(
+					var s1t1a = await WickrIOAPI.cmdSend1to1Attachment(
 						users,
 						attachment,
 						displayName,
@@ -235,7 +235,7 @@ async function main() {
 			} else {
 				var message = req.body.message
 				try {
-					var csm = WickrIOAPI.cmdSend1to1Message(users, message, ttl, bor, '', [], messagemeta)
+					var csm = await WickrIOAPI.cmdSend1to1Message(users, message, ttl, bor, '', [], messagemeta)
 					console.log(csm)
 					res.send(csm)
 				} catch (err) {
@@ -264,7 +264,7 @@ async function main() {
 				console.log("attachment:", attachment)
 				console.log("displayName:", displayName)
 				try {
-					var csra = WickrIOAPI.cmdSendRoomAttachment(
+					var csra = await WickrIOAPI.cmdSendRoomAttachment(
 						vGroupID,
 						attachment,
 						displayName,
@@ -281,7 +281,7 @@ async function main() {
 			} else {
 				var message = req.body.message
 				try {
-					var csrm = WickrIOAPI.cmdSendRoomMessage(
+					var csrm = await WickrIOAPI.cmdSendRoomMessage(
 						vGroupID,
 						message,
 						ttl,
@@ -301,7 +301,7 @@ async function main() {
 		}
 	})
 
-	app.route([xapiEndpoint + "/File", endpoint + "/File"]).post(upload.single("attachment"), function (req, res) {
+	app.route([xapiEndpoint + "/File", endpoint + "/File"]).post(upload.single("attachment"), async function (req, res) {
 		res.set("Content-Type", "text/plain")
 		res.set("Authorization", "Basic base64_auth_token")
 
@@ -329,7 +329,7 @@ async function main() {
 
 				if (req.body.vgroupid) {
 					try {
-						var csra = WickrIOAPI.cmdSendRoomAttachment(
+						var csra = await WickrIOAPI.cmdSendRoomAttachment(
 							req.body.vgroupid,
 							userNewFile,
 							req.file.originalname,
@@ -358,7 +358,7 @@ async function main() {
 					}
 
 					try {
-						let reply = WickrIOAPI.cmdSend1to1Attachment(
+						let reply = await WickrIOAPI.cmdSend1to1Attachment(
 							users,
 							userNewFile,
 							req.file.originalname,
@@ -376,9 +376,9 @@ async function main() {
 		}
 	})
 
-	app.route([xapiEndpoint + "/Statistics", endpoint + "/Statistics"]).get(function (req, res) {
+	app.route([xapiEndpoint + "/Statistics", endpoint + "/Statistics"]).get(async function (req, res) {
       try {
-        var statistics = WickrIOAPI.cmdGetStatistics()
+        var statistics = await WickrIOAPI.cmdGetStatistics()
         var response = isJson(statistics)
         if (response !== false) {
           statistics = response
@@ -395,10 +395,10 @@ async function main() {
       }
   })
 
-	app.route([xapiEndpoint + "/Statistics", endpoint + "/Statistics"]).delete(function (req, res) {
+	app.route([xapiEndpoint + "/Statistics", endpoint + "/Statistics"]).delete(async function (req, res) {
 		res.set("Content-Type", "text/plain")
 		try {
-			var cleared = WickrIOAPI.cmdClearStatistics()
+			var cleared = await WickrIOAPI.cmdClearStatistics()
 			console.log(cleared)
 			res.send("statistics cleared successfully")
 		} catch (err) {
@@ -408,7 +408,7 @@ async function main() {
 		}
 	})
 
-	app.route([xapiEndpoint + "/Rooms", endpoint + "/Rooms"]).post(function (req, res) {
+	app.route([xapiEndpoint + "/Rooms", endpoint + "/Rooms"]).post(async function (req, res) {
 		if (!req.body.room) {
 			return res
 				.type("txt")
@@ -440,7 +440,7 @@ async function main() {
 			masters.push(room.masters[i].name)
 		}
 		try {
-			var car = WickrIOAPI.cmdAddRoom(
+			var car = await WickrIOAPI.cmdAddRoom(
 				members,
 				masters,
 				title,
@@ -456,12 +456,12 @@ async function main() {
 		}
 	})
 
-	app.route([xapiEndpoint + "/Rooms", endpoint + "/Rooms"]).get(function (req, res) {
+	app.route([xapiEndpoint + "/Rooms", endpoint + "/Rooms"]).get(async function (req, res) {
 		res.set("Content-Type", "application/json")
 		var vGroupID = req.params.vGroupID
 		if (vGroupID === undefined) {
 			try {
-				var cgr = WickrIOAPI.cmdGetRooms()
+				var cgr = await WickrIOAPI.cmdGetRooms()
 				res.type("json").send(cgr)
 			} catch (err) {
 				console.log(err)
@@ -470,7 +470,7 @@ async function main() {
 			}
 		} else {
 			try {
-				var cgr = WickrIOAPI.cmdGetRoom(vGroupID)
+				var cgr = await WickrIOAPI.cmdGetRoom(vGroupID)
 				res.send(cgr)
 			} catch (err) {
 				console.log(err)
@@ -480,11 +480,11 @@ async function main() {
 		}
 	})
 
-	app.route([xapiEndpoint + "/Rooms/:vGroupID", endpoint + "/Rooms/:vGroupID"]).get(function (req, res) {
+	app.route([xapiEndpoint + "/Rooms/:vGroupID", endpoint + "/Rooms/:vGroupID"]).get(async function (req, res) {
 		res.set("Content-Type", "application/json")
 		var vGroupID = req.params.vGroupID
 		try {
-			var cgr = WickrIOAPI.cmdGetRoom(vGroupID)
+			var cgr = await WickrIOAPI.cmdGetRoom(vGroupID)
 			res.send(cgr)
 		} catch (err) {
 			console.log(err)
@@ -493,12 +493,12 @@ async function main() {
 		}
 	})
 
-	app.route([xapiEndpoint + "/Rooms/:vGroupID", endpoint + "/Rooms/:vGroupID"]).delete(function (req, res) {
+	app.route([xapiEndpoint + "/Rooms/:vGroupID", endpoint + "/Rooms/:vGroupID"]).delete(async function (req, res) {
 		var vGroupID = req.params.vGroupID
 		var reason = req.query.reason
 		if (reason === "leave") {
 			try {
-				var clr = WickrIOAPI.cmdLeaveRoom(vGroupID)
+				var clr = await WickrIOAPI.cmdLeaveRoom(vGroupID)
 				console.log("cmdLeaveRoom:", clr)
 				res.send(bot_username + " left room successfully")
 			} catch (err) {
@@ -508,7 +508,7 @@ async function main() {
 			}
 		} else {
 			try {
-				var cdr = WickrIOAPI.cmdDeleteRoom(vGroupID)
+				var cdr = await WickrIOAPI.cmdDeleteRoom(vGroupID)
 				console.log("cmdDeleteRoom:", cdr)
 				res.send("Room deleted successfully")
 			} catch (err) {
@@ -521,7 +521,7 @@ async function main() {
 	})
 
 	//ModifyRoom
-	app.route([xapiEndpoint + "/Rooms/:vGroupID", endpoint + "/Rooms/:vGroupID"]).post(function (req, res) {
+	app.route([xapiEndpoint + "/Rooms/:vGroupID", endpoint + "/Rooms/:vGroupID"]).post(async function (req, res) {
 		var vGroupID = req.params.vGroupID
 		if (typeof vGroupID !== "string")
 			return res.send("vGroupID must be a string.")
@@ -546,7 +546,7 @@ async function main() {
 			}
 		}
 		try {
-			var cmr = WickrIOAPI.cmdModifyRoom(
+			var cmr = await WickrIOAPI.cmdModifyRoom(
 				vGroupID,
 				members,
 				masters,
@@ -564,7 +564,7 @@ async function main() {
 		}
 	})
 
-	app.route([xapiEndpoint + "/GroupConvo", endpoint + "/GroupConvo"]).post(function (req, res) {
+	app.route([xapiEndpoint + "/GroupConvo", endpoint + "/GroupConvo"]).post(async function (req, res) {
 		var groupconvo = req.body.groupconvo
 		if (!groupconvo.members)
 			return res.send("An array of GroupConvo members is required")
@@ -577,7 +577,7 @@ async function main() {
 			members.push(groupconvo.members[i].name)
 		}
 		try {
-			var cagc = WickrIOAPI.cmdAddGroupConvo(members, ttl, bor)
+			var cagc = await WickrIOAPI.cmdAddGroupConvo(members, ttl, bor)
 			console.log(cagc)
 			res.type("json").send(cagc)
 		} catch (err) {
@@ -587,9 +587,9 @@ async function main() {
 		}
 	})
 
-	app.route([xapiEndpoint + "/GroupConvo", endpoint + "/GroupConvo"]).get(function (req, res) {
+	app.route([xapiEndpoint + "/GroupConvo", endpoint + "/GroupConvo"]).get(async function (req, res) {
 		try {
-			var cggc = WickrIOAPI.cmdGetGroupConvos()
+			var cggc = await WickrIOAPI.cmdGetGroupConvos()
 			res.type("json").send(cggc)
 		} catch (err) {
 			console.log(err)
@@ -598,10 +598,10 @@ async function main() {
 		}
 	})
 
-	app.route([xapiEndpoint + "/GroupConvo/:vGroupID", endpoint + "/GroupConvo/:vGroupID"]).get(function (req, res) {
+	app.route([xapiEndpoint + "/GroupConvo/:vGroupID", endpoint + "/GroupConvo/:vGroupID"]).get(async function (req, res) {
 		var vGroupID = req.params.vGroupID
 		try {
-			var cggc = WickrIOAPI.cmdGetGroupConvo(vGroupID)
+			var cggc = await WickrIOAPI.cmdGetGroupConvo(vGroupID)
 			res.type("json").send(cggc)
 		} catch (err) {
 			console.log(err)
@@ -610,7 +610,7 @@ async function main() {
 		}
 	})
 
-	app.route([xapiEndpoint + "/GroupConvo/:vGroupID", endpoint + "/GroupConvo/:vGroupID"]).delete(function (req, res) {
+	app.route([xapiEndpoint + "/GroupConvo/:vGroupID", endpoint + "/GroupConvo/:vGroupID"]).delete(async function (req, res) {
 		var vGroupID = req.params.vGroupID
 		try {
 			var cdgc = WickrIOAPI.cmdDeleteGroupConvo(vGroupID)
@@ -649,14 +649,14 @@ async function main() {
 		res.end()
 	})
 
-	app.route([xapiEndpoint + "/Messages/:vGroupID/:messageID", endpoint + "/Messages/:vGroupID/:messageID"]).delete(function (req, res) {
+	app.route([xapiEndpoint + "/Messages/:vGroupID/:messageID", endpoint + "/Messages/:vGroupID/:messageID"]).delete(async function (req, res) {
 		var vGroupID = req.params.vGroupID
 		var msgID = req.params.messageID
 
 		var doRecall = req.query.dorecall ? req.query.dorecall : "false"
 		if (doRecall === "true") {
 			try {
-				var cdr = WickrIOAPI.cmdSendRecallMessage(vGroupID, msgID)
+				var cdr = await WickrIOAPI.cmdSendRecallMessage(vGroupID, msgID)
 				console.log("cmdSendRecallMessage:", cdr)
 				res.send("Recall message sent")
 			} catch (err) {
@@ -666,7 +666,7 @@ async function main() {
 			}
 		} else {
 			try {
-				var clr = WickrIOAPI.cmdSendDeleteMessage(vGroupID, msgID)
+				var clr = await WickrIOAPI.cmdSendDeleteMessage(vGroupID, msgID)
 				console.log("cmdSendDeleteMessage:", clr)
 				res.send("Delete message sent")
 			} catch (err) {
@@ -678,11 +678,11 @@ async function main() {
 		res.end()
 	})
 
-	app.route([xapiEndpoint + "/MsgRecvCallback", endpoint + "/MsgRecvCallback"]).post(function (req, res) {
+	app.route([xapiEndpoint + "/MsgRecvCallback", endpoint + "/MsgRecvCallback"]).post(async function (req, res) {
 		var callbackUrl = req.query.callbackurl
 		console.log("callbackUrl:", callbackUrl)
 		try {
-			var csmc = WickrIOAPI.cmdSetMsgCallback(callbackUrl)
+			var csmc = await WickrIOAPI.cmdSetMsgCallback(callbackUrl)
 			console.log(csmc)
 			res.type("txt").send(csmc)
 		} catch (err) {
@@ -692,9 +692,9 @@ async function main() {
 		}
 	})
 
-	app.route([xapiEndpoint + "/MsgRecvCallback", endpoint + "/MsgRecvCallback"]).get(function (req, res) {
+	app.route([xapiEndpoint + "/MsgRecvCallback", endpoint + "/MsgRecvCallback"]).get(async function (req, res) {
 		try {
-			var cgmc = WickrIOAPI.cmdGetMsgCallback() // callbabck
+			var cgmc = await WickrIOAPI.cmdGetMsgCallback() // callbabck
 			res.type("txt").send(cgmc)
 		} catch (err) {
 			console.log(err)
@@ -703,9 +703,9 @@ async function main() {
 		}
 	})
 
-	app.route([xapiEndpoint + "/MsgRecvCallback", endpoint + "/MsgRecvCallback"]).delete(function (req, res) {
+	app.route([xapiEndpoint + "/MsgRecvCallback", endpoint + "/MsgRecvCallback"]).delete(async function (req, res) {
 		try {
-			var cdmc = WickrIOAPI.cmdDeleteMsgCallback()
+			var cdmc = await WickrIOAPI.cmdDeleteMsgCallback()
 			console.log(cdmc)
 			res.type("txt").send(cdmc)
 		} catch (err) {
@@ -715,9 +715,9 @@ async function main() {
 		}
 	})
 
-	app.route([xapiEndpoint + "/Directory", endpoint + "/Directory"]).get(function (req, res) {
+	app.route([xapiEndpoint + "/Directory", endpoint + "/Directory"]).get(async function (req, res) {
 		try {
-			var cgd = WickrIOAPI.cmdGetDirectory()
+			var cgd = await WickrIOAPI.cmdGetDirectory()
 			res.type("json").send(cgd)
 		} catch (err) {
 			console.log(err)
