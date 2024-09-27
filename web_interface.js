@@ -2,7 +2,6 @@ const express = require("express")
 const https = require("https")
 const bodyParser = require("body-parser")
 const helmet = require("helmet")
-const WickrIOAPI = require("wickrio_addon")
 const WickrIOBotAPI = require("wickrio-bot-api")
 const fs = require("fs")
 const os = require("os")
@@ -12,6 +11,7 @@ app.use(helmet()) //security http headers
 const multer = require("multer")
 
 const bot = new WickrIOBotAPI.WickrIOBot()
+const WickrIOAPI = bot.apiService().WickrIOAPI;
 
 process.title = "wickrioWebApi"
 process.stdin.resume() //so the program will not close instantly
