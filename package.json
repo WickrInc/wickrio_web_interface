@@ -1,6 +1,6 @@
 {
 	"name": "wickrio_web_interface",
-	"version": "6.56.0",
+	"version": "6.60",
 	"description": "WickrIO Node.JS API Web Interface",
 	"main": "web_interface.js",
 	"author": "Paul Cushman (pcushman@wickr.com)",
