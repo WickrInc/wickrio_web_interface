@@ -65,6 +65,20 @@ async function main() {
 
 	bot.setAdminOnly(false)
 
+	// listen for the /info command and reply with current vgroupID of the room/group
+	bot.startListening(async (rawMessage) => {
+		const message = JSON.parse(rawMessage)
+		logger.info("Received message:", JSON.stringify(message, null, 2))
+		// Determine the convo type (1to1, group, or room)
+		const vGroupID = message.vgroupid
+		const isRoom = vGroupID && vGroupID.charAt(0) === 'S'
+		const isGroup = vGroupID && vGroupID.charAt(0) === 'G'
+		if (message.message === "/info" && (isRoom || isGroup)) {
+			const reply = `Room ID: ${vGroupID}`
+			await WickrIOAPI.cmdSendRoomMessage(vGroupID, reply)
+		}
+	})
+
 	bot_username = tokens.WICKRIO_BOT_NAME.value
 	bot_port = tokens.BOT_PORT.value
 	bot_api_key = tokens.BOT_API_KEY.value
