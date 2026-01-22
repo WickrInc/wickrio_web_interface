@@ -70,6 +70,7 @@ async function main() {
 	// listen for the /info command and reply with current vgroupID of the room/group
 	bot.startListening(async (rawMessage) => {
 		const message = JSON.parse(rawMessage)
+		logger.info("Received message: <redacted>, message length=", JSON.stringify(message).length)
 		// Determine the convo type (1to1, group, or room)
 		const vGroupID = message.vgroupid
 		const isRoom = vGroupID && vGroupID.charAt(0) === 'S'
