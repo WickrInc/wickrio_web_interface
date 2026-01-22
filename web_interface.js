@@ -639,9 +639,14 @@ async function main() {
 	})
 
 	app.route([xapiEndpoint + "/Messages", endpoint + "/Messages"]).get(async function (req, res) {
+		console.log("Received GET request to /Messages endpoint")
 		var count = 1
-		var index = 0
-		if (req.query.count) count = req.query.count
+
+		// Cap message count at 10
+		if (req.query.count) {
+			count = Math.min(req.query.count, 10)
+		}
+
 		var msgArray = []
 		for (var i = 0; i < count; i++) {
 			try {
@@ -658,8 +663,13 @@ async function main() {
 				console.log(message)
 			}
 		}
-		if (msgArray === "[]") res.set("Content-Type", "text/plain")
-		else res.set("Content-Type", "application/json")
+		if (msgArray === "[]") {
+			res.set("Content-Type", "text/plain")
+		} else {
+			res.set("Content-Type", "application/json")
+			console.log(`Returning ${msgArray.length} messages in response`)
+		}
+
 		res.send(msgArray)
 		res.end()
 	})
@@ -778,4 +788,3 @@ function isJson(str) {
 }
 
 main()
-
