@@ -66,21 +66,6 @@ async function main() {
 	bot.setAdminOnly(false)
 
 	bot_username = tokens.WICKRIO_BOT_NAME.value
-
-	// listen for the /info command and reply with current vgroupID of the room/group
-	bot.startListening(async (rawMessage) => {
-		const message = JSON.parse(rawMessage)
-		logger.info("Received message:", JSON.stringify(message, null, 2))
-		// Determine the convo type (1to1, group, or room)
-		const vGroupID = message.vgroupid
-		const isRoom = vGroupID && vGroupID.charAt(0) === 'S'
-		const isGroup = vGroupID && vGroupID.charAt(0) === 'G'
-		if ((message.message === "/info" || message.message === `/info@${bot_username}`) && (isRoom || isGroup)) {
-			const reply = `Room ID: ${vGroupID}`
-			await WickrIOAPI.cmdSendRoomMessage(vGroupID, reply)
-		}
-	})
-
 	bot_port = tokens.BOT_PORT.value
 	bot_api_key = tokens.BOT_API_KEY.value
 	bot_api_auth_token = tokens.BOT_API_AUTH_TOKEN.value
@@ -181,14 +166,14 @@ async function main() {
   const xapiEndpoint = "/WickrIO/V2/Apps"
 
   app.use(xapiEndpoint, function(req, res, next) {
-    const xapi = req.get("x-api-key");
-    if(xapi != bot_api_key) {
+	const xapi = req.get("x-api-key");
+	if(xapi != bot_api_key) {
 			return res
 				.type("txt")
 				.status(401)
 				.send("Access denied: invalid api-key.")
-    }
-    next()
+	}
+	next()
   })
 
 	var upload = multer({ dest: "attachments/" })
@@ -204,14 +189,14 @@ async function main() {
 		}
 		var ttl = "",
 			bor = ""
-    let messagemeta = {}
+	let messagemeta = {}
 		if (req.body.ttl) ttl = req.body.ttl.toString()
 		if (req.body.bor) bor = req.body.bor.toString()
 
-    if (req.body.messagemeta)
-        messagemeta = JSON.stringify(req.body.messagemeta)
-    else
-        messagemeta = ""
+	if (req.body.messagemeta)
+		messagemeta = JSON.stringify(req.body.messagemeta)
+	else
+		messagemeta = ""
 		if (req.body.users) {
 			var users = []
 			for (var i in req.body.users) {
@@ -301,9 +286,9 @@ async function main() {
 						message,
 						ttl,
 						bor,
-            '',
-            [],
-            messagemeta
+			'',
+			[],
+			messagemeta
 					)
 					console.log(csrm)
 					res.send(csrm)
@@ -392,22 +377,22 @@ async function main() {
 	})
 
 	app.route([xapiEndpoint + "/Statistics", endpoint + "/Statistics"]).get(async function (req, res) {
-      try {
-        var statistics = await WickrIOAPI.cmdGetStatistics()
-        var response = isJson(statistics)
-        if (response !== false) {
-          statistics = response
-        }
-        if (statistics.statistics) {
-          res.set("Content-Type", "application/json")
-          res.send(statistics)
-        }
-        console.log(statistics)
-      } catch (err) {
-        console.log(err)
-        res.statusCode = 400
-        res.type("txt").send(err.toString())
-      }
+	  try {
+		var statistics = await WickrIOAPI.cmdGetStatistics()
+		var response = isJson(statistics)
+		if (response !== false) {
+		  statistics = response
+		}
+		if (statistics.statistics) {
+		  res.set("Content-Type", "application/json")
+		  res.send(statistics)
+		}
+		console.log(statistics)
+	  } catch (err) {
+		console.log(err)
+		res.statusCode = 400
+		res.type("txt").send(err.toString())
+	  }
   })
 
 	app.route([xapiEndpoint + "/Statistics", endpoint + "/Statistics"]).delete(async function (req, res) {
