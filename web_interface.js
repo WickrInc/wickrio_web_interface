@@ -251,7 +251,7 @@ async function main() {
 				var message = req.body.message
 				try {
 					var csm = await WickrIOAPI.cmdSend1to1Message(users, message, ttl, bor, '', [], messagemeta)
-					console.log(csm)
+					logger.info('1to1 message sent')
 					res.send(csm)
 				} catch (err) {
 					console.log(err)
@@ -286,7 +286,7 @@ async function main() {
 						ttl,
 						bor
 					)
-					console.log(csra)
+					logger.info('Room attachment sent')
 					res.send(csra)
 				} catch (err) {
 					console.log(err)
@@ -305,7 +305,7 @@ async function main() {
             [],
             messagemeta
 					)
-					console.log(csrm)
+					logger.info('Room message sent')
 					res.send(csrm)
 				} catch (err) {
 					console.log(err)
