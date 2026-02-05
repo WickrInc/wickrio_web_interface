@@ -11,6 +11,7 @@ app.use(helmet()) //security http headers
 const multer = require("multer")
 const path = require('node:path')
 const sanitizeFilename = require("sanitize-filename")
+const morgan = require("morgan")
 
 const bot = new WickrIOBotAPI.WickrIOBot()
 const WickrIOAPI = bot.apiService().WickrIOAPI;
@@ -77,8 +78,6 @@ async function main() {
 	logger.info("bot_port=" + bot_port)
 	logger.info("https_choice=" + https_choice)
 
-  logger.verbose(os.networkInterfaces())
-
 	if (https_choice === "yes" || https_choice === "y") {
 		ssl_key_location = tokens.SSL_KEY_LOCATION.value
 		ssl_crt_location = tokens.SSL_CRT_LOCATION.value
@@ -133,6 +132,11 @@ async function main() {
 			next()
 		}
 	})
+
+	// HTTP request/response logging middleware
+	app.use(morgan('combined', {
+		stream: { write: msg => logger.info(msg.trim()) }
+	}))
 
 	app.all("*", function (req, res, next) {
 		var authHeader = req.get("Authorization")
@@ -625,14 +629,15 @@ async function main() {
 
 	app.route([xapiEndpoint + "/Messages", endpoint + "/Messages"]).get(async function (req, res) {
 		var count = 1
-		var index = 0
-		if (req.query.count) count = req.query.count
+		if (req.query.count) {
+			count = req.query.count
+		}
 		var msgArray = []
 		for (var i = 0; i < count; i++) {
 			try {
 				var message = await WickrIOAPI.cmdGetReceivedMessage()
 			} catch (err) {
-				console.log(err)
+				console.log({ err }, "Error calling cmdGetReceivedMessage")
 				res.statusCode = 400
 				return res.type("txt").send(err.toString())
 			}
@@ -642,8 +647,12 @@ async function main() {
 				msgArray.push(JSON.parse(message))
 			}
 		}
-		if (msgArray === "[]") res.set("Content-Type", "text/plain")
-		else res.set("Content-Type", "application/json")
+		if (msgArray === "[]") {
+			res.set("Content-Type", "text/plain")
+		} else {
+			res.set("Content-Type", "application/json")
+			console.log(`Returning ${msgArray.length} messages from the queue`)
+		}
 		res.send(msgArray)
 		res.end()
 	})
@@ -762,4 +771,3 @@ function isJson(str) {
 }
 
 main()
-
