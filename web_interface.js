@@ -626,10 +626,19 @@ async function main() {
 	})
 
 	app.route([xapiEndpoint + "/Messages", endpoint + "/Messages"]).get(async function (req, res) {
-		var count = 1
+		let count = 1
+		const maxCount = 1000
+
 		if (req.query.count) {
-			count = req.query.count
+			count = parseInt(req.query.count)
+			if (count > maxCount ) {
+				count = maxCount
+			} else if (isNaN(count) || count < 1) {
+				res.statusCode = 400
+				return res.type("txt").send(`Invalid count parameter. Must be a number greater than 0.`)
+			}
 		}
+
 		var msgArray = []
 		for (var i = 0; i < count; i++) {
 			try {
