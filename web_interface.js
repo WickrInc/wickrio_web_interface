@@ -1,10 +1,8 @@
 const express = require("express")
 const https = require("https")
-const bodyParser = require("body-parser")
 const helmet = require("helmet")
 const WickrIOBotAPI = require("wickrio-bot-api")
 const fs = require("fs")
-const os = require("os")
 const app = express()
 const logger = require("./logger")
 app.use(helmet()) //security http headers
@@ -119,9 +117,9 @@ async function main() {
 	}
 
 	// parse application/x-www-form-urlencoded
-	app.use(bodyParser.urlencoded({ extended: false }))
+	app.use(express.urlencoded({ extended: false }))
 	// parse application/json
-	app.use(bodyParser.json())
+	app.use(express.json())
 
 	app.use(function (error, req, res, next) {
 		if (error instanceof SyntaxError) {
@@ -647,12 +645,9 @@ async function main() {
 				msgArray.push(JSON.parse(message))
 			}
 		}
-		if (msgArray === "[]") {
-			res.set("Content-Type", "text/plain")
-		} else {
-			res.set("Content-Type", "application/json")
-			console.log(`Returning ${msgArray.length} messages from the queue`)
-		}
+
+		res.set("Content-Type", "application/json")
+		console.log(`Returning ${msgArray.length} messages from the queue`)
 		res.send(msgArray)
 		res.end()
 	})
