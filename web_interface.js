@@ -9,6 +9,8 @@ const app = express()
 const logger = require("./logger")
 app.use(helmet()) //security http headers
 const multer = require("multer")
+const path = require('node:path')
+const sanitizeFilename = require("sanitize-filename")
 
 const bot = new WickrIOBotAPI.WickrIOBot()
 const WickrIOAPI = bot.apiService().WickrIOAPI;
@@ -308,42 +310,40 @@ async function main() {
 		if (!req.body.users && !req.body.vgroupid) {
 			return res.send("Need a list of users OR a vGroupID to send a message.")
 		} else {
-			var userAttachments
-			var userNewFile
-			var inFile
 			let { ttl = "", bor = "" } = req.body
 			if (req.file === undefined) {
 				console.log("attachment is not defined!")
 				return
 			} else {
-				userAttachments = process.cwd() + "/attachments"
-				userNewFile = userAttachments + "/" + req.file.originalname
-
-				inFile = process.cwd() + "/attachments/" + req.file.filename
+				const userAttachments = path.join([process.cwd(), "attachments"])
+				const safeOriginalName = sanitizeFilename(req.file.originalname) || "attachment"
+				const userNewFile = path.join([userAttachments, safeOriginalName])
+				const inFile = path.join([userAttachments, req.file.filename])
 
 				fs.mkdirSync(userAttachments, { recursive: true })
-				if (fs.existsSync(userNewFile)) fs.unlinkSync(userNewFile)
-				// userAttachments = process.cwd() + '/attachments/' + req.user.email;
+				if (fs.existsSync(userNewFile)) {
+					fs.unlinkSync(userNewFile)
+				}
+
 				fs.renameSync(inFile, userNewFile)
-				console.log({ inFile, userNewFile })
+				console.log({ inFile, userNewFile }, "Sending attachment")
 
 				if (req.body.vgroupid) {
 					try {
 						var csra = await WickrIOAPI.cmdSendRoomAttachment(
 							req.body.vgroupid,
 							userNewFile,
-							req.file.originalname,
+							safeOriginalName,
 							ttl,
 							bor
 						)
 						res.send(csra)
 					} catch (err) {
-						console.log(err)
-							res.statusCode = 400
+						console.log({ err, vgroupid: req.body.vgroupid }, "Error sending attachment to room")
+						res.statusCode = 400
 						res.send(err.toString())
 					}
 				} else if (req.body.users) {
-					// userAttachments = process.cwd() + '/attachments/' + req.user.email;
 					console.log({ bodyusers: req.body.users })
 					var users = []
 					try {
@@ -361,13 +361,13 @@ async function main() {
 						let reply = await WickrIOAPI.cmdSend1to1Attachment(
 							users,
 							userNewFile,
-							req.file.originalname,
+							safeOriginalName,
 							ttl,
 							bor
 						)
 						res.send(reply)
 					} catch (err) {
-						console.log(err)
+						console.log({ err }, "Error sending attachment to users")
 						res.statusCode = 400
 						res.send('error sending attachment!')
 					}
