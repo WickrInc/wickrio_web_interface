@@ -8,7 +8,6 @@ const logger = require("./logger")
 app.use(helmet()) //security http headers
 const multer = require("multer")
 const path = require('node:path')
-const sanitizeFilename = require("sanitize-filename")
 const morgan = require("morgan")
 
 const bot = new WickrIOBotAPI.WickrIOBot()
@@ -39,8 +38,10 @@ process.on("SIGINT", exitHandler.bind(null, { exit: true }))
 process.on("SIGUSR1", exitHandler.bind(null, { pid: true }))
 process.on("SIGUSR2", exitHandler.bind(null, { pid: true }))
 
-//catches uncaught exceptions
 process.on("uncaughtException", exitHandler.bind(null, { exit: true }))
+process.on("unhandledRejection", (reason, p) => {
+	console.error('Unhandled Rejection at: Promise', p, 'reason:', reason)
+})
 
 var bot_username,
 	bot_port,
@@ -310,17 +311,22 @@ async function main() {
 		res.set("Authorization", "Basic base64_auth_token")
 
 		if (!req.body.users && !req.body.vgroupid) {
+			res.statusCode = 400
 			return res.send("Need a list of users OR a vGroupID to send a message.")
 		} else {
 			let { ttl = "", bor = "" } = req.body
 			if (req.file === undefined) {
 				console.log("attachment is not defined!")
+				res.statusCode = 400
+				res.send("No attachment included in request")
 				return
 			} else {
-				const userAttachments = path.join([process.cwd(), "attachments"])
-				const safeOriginalName = sanitizeFilename(req.file.originalname) || "attachment"
-				const userNewFile = path.join([userAttachments, safeOriginalName])
-				const inFile = path.join([userAttachments, req.file.filename])
+				const userAttachments = path.join(process.cwd(), "attachments")
+				// multer/busboy should provide only the basename of the file, but call
+				// path.basename again to be certain there's no chance of path traversal
+				const filename = path.basename(req.file.originalname)
+				const userNewFile = path.join(userAttachments, filename)
+				const inFile = path.join(userAttachments, req.file.filename)
 
 				fs.mkdirSync(userAttachments, { recursive: true })
 				if (fs.existsSync(userNewFile)) {
@@ -335,7 +341,7 @@ async function main() {
 						var csra = await WickrIOAPI.cmdSendRoomAttachment(
 							req.body.vgroupid,
 							userNewFile,
-							safeOriginalName,
+							filename,
 							ttl,
 							bor
 						)
@@ -344,6 +350,7 @@ async function main() {
 						console.log({ err, vgroupid: req.body.vgroupid }, "Error sending attachment to room")
 						res.statusCode = 400
 						res.send(err.toString())
+						return
 					}
 				} else if (req.body.users) {
 					console.log({ bodyusers: req.body.users })
@@ -363,7 +370,7 @@ async function main() {
 						let reply = await WickrIOAPI.cmdSend1to1Attachment(
 							users,
 							userNewFile,
-							safeOriginalName,
+							filename,
 							ttl,
 							bor
 						)
@@ -372,6 +379,7 @@ async function main() {
 						console.log({ err }, "Error sending attachment to users")
 						res.statusCode = 400
 						res.send('error sending attachment!')
+						return
 					}
 				}
 			}
