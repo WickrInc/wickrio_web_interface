@@ -1,14 +1,14 @@
 const express = require("express")
 const https = require("https")
-const bodyParser = require("body-parser")
 const helmet = require("helmet")
 const WickrIOBotAPI = require("wickrio-bot-api")
 const fs = require("fs")
-const os = require("os")
 const app = express()
 const logger = require("./logger")
 app.use(helmet()) //security http headers
 const multer = require("multer")
+const path = require('node:path')
+const morgan = require("morgan")
 
 const bot = new WickrIOBotAPI.WickrIOBot()
 const WickrIOAPI = bot.apiService().WickrIOAPI;
@@ -38,8 +38,10 @@ process.on("SIGINT", exitHandler.bind(null, { exit: true }))
 process.on("SIGUSR1", exitHandler.bind(null, { pid: true }))
 process.on("SIGUSR2", exitHandler.bind(null, { pid: true }))
 
-//catches uncaught exceptions
 process.on("uncaughtException", exitHandler.bind(null, { exit: true }))
+process.on("unhandledRejection", (reason, p) => {
+	console.error('Unhandled Rejection at: Promise', p, 'reason:', reason)
+})
 
 var bot_username,
 	bot_port,
@@ -74,8 +76,6 @@ async function main() {
 	logger.info("bot_username=" + bot_username)
 	logger.info("bot_port=" + bot_port)
 	logger.info("https_choice=" + https_choice)
-
-  logger.verbose(os.networkInterfaces())
 
 	if (https_choice === "yes" || https_choice === "y") {
 		ssl_key_location = tokens.SSL_KEY_LOCATION.value
@@ -118,9 +118,9 @@ async function main() {
 	}
 
 	// parse application/x-www-form-urlencoded
-	app.use(bodyParser.urlencoded({ extended: false }))
+	app.use(express.urlencoded({ extended: false }))
 	// parse application/json
-	app.use(bodyParser.json())
+	app.use(express.json())
 
 	app.use(function (error, req, res, next) {
 		if (error instanceof SyntaxError) {
@@ -131,6 +131,11 @@ async function main() {
 			next()
 		}
 	})
+
+	// HTTP request/response logging middleware
+	app.use(morgan('combined', {
+		stream: { write: msg => logger.info(msg.trim()) }
+	}))
 
 	app.all("*", function (req, res, next) {
 		var authHeader = req.get("Authorization")
@@ -306,44 +311,48 @@ async function main() {
 		res.set("Authorization", "Basic base64_auth_token")
 
 		if (!req.body.users && !req.body.vgroupid) {
+			res.statusCode = 400
 			return res.send("Need a list of users OR a vGroupID to send a message.")
 		} else {
-			var userAttachments
-			var userNewFile
-			var inFile
 			let { ttl = "", bor = "" } = req.body
 			if (req.file === undefined) {
 				console.log("attachment is not defined!")
+				res.statusCode = 400
+				res.send("No attachment included in request")
 				return
 			} else {
-				userAttachments = process.cwd() + "/attachments"
-				userNewFile = userAttachments + "/" + req.file.originalname
-
-				inFile = process.cwd() + "/attachments/" + req.file.filename
+				const userAttachments = path.join(process.cwd(), "attachments")
+				// multer/busboy should provide only the basename of the file, but call
+				// path.basename again to be certain there's no chance of path traversal
+				const filename = path.basename(req.file.originalname)
+				const userNewFile = path.join(userAttachments, filename)
+				const inFile = path.join(userAttachments, req.file.filename)
 
 				fs.mkdirSync(userAttachments, { recursive: true })
-				if (fs.existsSync(userNewFile)) fs.unlinkSync(userNewFile)
-				// userAttachments = process.cwd() + '/attachments/' + req.user.email;
+				if (fs.existsSync(userNewFile)) {
+					fs.unlinkSync(userNewFile)
+				}
+
 				fs.renameSync(inFile, userNewFile)
-				console.log({ inFile, userNewFile })
+				console.log({ inFile, userNewFile }, "Sending attachment")
 
 				if (req.body.vgroupid) {
 					try {
 						var csra = await WickrIOAPI.cmdSendRoomAttachment(
 							req.body.vgroupid,
 							userNewFile,
-							req.file.originalname,
+							filename,
 							ttl,
 							bor
 						)
 						res.send(csra)
 					} catch (err) {
-						console.log(err)
-							res.statusCode = 400
+						console.log({ err, vgroupid: req.body.vgroupid }, "Error sending attachment to room")
+						res.statusCode = 400
 						res.send(err.toString())
+						return
 					}
 				} else if (req.body.users) {
-					// userAttachments = process.cwd() + '/attachments/' + req.user.email;
 					console.log({ bodyusers: req.body.users })
 					var users = []
 					try {
@@ -361,15 +370,16 @@ async function main() {
 						let reply = await WickrIOAPI.cmdSend1to1Attachment(
 							users,
 							userNewFile,
-							req.file.originalname,
+							filename,
 							ttl,
 							bor
 						)
 						res.send(reply)
 					} catch (err) {
-						console.log(err)
+						console.log({ err }, "Error sending attachment to users")
 						res.statusCode = 400
 						res.send('error sending attachment!')
+						return
 					}
 				}
 			}
@@ -624,15 +634,25 @@ async function main() {
 	})
 
 	app.route([xapiEndpoint + "/Messages", endpoint + "/Messages"]).get(async function (req, res) {
-		var count = 1
-		var index = 0
-		if (req.query.count) count = req.query.count
+		let count = 1
+		const maxCount = 1000
+
+		if (req.query.count) {
+			count = parseInt(req.query.count)
+			if (count > maxCount ) {
+				count = maxCount
+			} else if (isNaN(count) || count < 1) {
+				res.statusCode = 400
+				return res.type("txt").send(`Invalid count parameter. Must be a number greater than 0.`)
+			}
+		}
+
 		var msgArray = []
 		for (var i = 0; i < count; i++) {
 			try {
 				var message = await WickrIOAPI.cmdGetReceivedMessage()
 			} catch (err) {
-				console.log(err)
+				console.log({ err }, "Error calling cmdGetReceivedMessage")
 				res.statusCode = 400
 				return res.type("txt").send(err.toString())
 			}
@@ -642,8 +662,9 @@ async function main() {
 				msgArray.push(JSON.parse(message))
 			}
 		}
-		if (msgArray === "[]") res.set("Content-Type", "text/plain")
-		else res.set("Content-Type", "application/json")
+
+		res.set("Content-Type", "application/json")
+		console.log(`Returning ${msgArray.length} messages from the queue`)
 		res.send(msgArray)
 		res.end()
 	})
@@ -762,4 +783,3 @@ function isJson(str) {
 }
 
 main()
-
