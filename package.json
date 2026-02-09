@@ -1,35 +1,40 @@
 {
-	"name": "wickrio_web_interface",
-	"version": "6.60",
-	"description": "WickrIO Node.JS API Web Interface",
-	"main": "web_interface.js",
-	"author": "Paul Cushman (pcushman@wickr.com)",
-	"license": "ISC",
-	"dependencies": {
-		"express": "^4.17.1",
-		"helmet": "^3.20.0",
-		"morgan": "^1.10.1",
-		"multer": "^1.4.5-lts.1",
-		"wickrio-bot-api": "^7.1.8"
-	},
-	"scripts": {
-		"start": "nohup wpm2 start --no-metrics ./wpm.json >>wpm2.output 2>&1 & echo $! > $(cat pidLocation.json)",
-		"stop": "kill $(cat $(cat pidLocation.json))",
-		"restart": "kill $(cat $(cat pidLocation.json)) && nohup wpm2 start --no-metrics ./wpm.json >>wpm2.output 2>&1 & echo $! > $(cat pidLocation.json)"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/WickrInc/wickrio_web_interface"
-	},
-	"keywords": [
-		"wickr",
-		"wickrio",
-		"wickrbot",
-		"bot",
-		"bots",
-		"secure",
-		"messaging",
-		"api"
-	],
-	"database": true
+  "name": "wickrio_web_interface",
+  "version": "6.60",
+  "description": "WickrIO Node.JS API Web Interface",
+  "main": "web_interface.js",
+  "author": "Paul Cushman (pcushman@wickr.com)",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "helmet": "^3.20.0",
+    "morgan": "^1.10.1",
+    "multer": "^1.4.5-lts.1",
+    "wickrio-bot-api": "^7.1.8"
+  },
+  "devDependencies": {
+    "prettier": "^3.8.1"
+  },
+  "scripts": {
+    "start": "nohup wpm2 start --no-metrics ./wpm.json >>wpm2.output 2>&1 & echo $! > $(cat pidLocation.json)",
+    "stop": "kill $(cat $(cat pidLocation.json))",
+    "restart": "kill $(cat $(cat pidLocation.json)) && nohup wpm2 start --no-metrics ./wpm.json >>wpm2.output 2>&1 & echo $! > $(cat pidLocation.json)",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WickrInc/wickrio_web_interface"
+  },
+  "keywords": [
+    "wickr",
+    "wickrio",
+    "wickrbot",
+    "bot",
+    "bots",
+    "secure",
+    "messaging",
+    "api"
+  ],
+  "database": true
 }
