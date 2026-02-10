@@ -66,6 +66,75 @@ The \<API Key\> value is the value you entered during the configuration of the W
 ## Usage:
 * For full documentation and for information on all of the endpoints and requirements visit: https://wickrinc.github.io/wickrio-docs/#web-interface-rest-api
 
+## Testing
+
+This project includes a comprehensive test suite built with Vitest and Supertest for integration testing.
+
+### Running Tests
+
+```bash
+# Run all tests once
+npm test
+
+# Run tests in watch mode (reruns on file changes)
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+```
+
+### Test Structure
+
+The test suite includes:
+- **Authentication Tests** (`tests/auth.test.js`) - Basic auth and API key validation
+- **Messages Tests** (`tests/messages.test.js`) - Sending/receiving messages and attachments
+- **Rooms Tests** (`tests/rooms.test.js`) - Room creation, modification, and deletion
+- **Files Tests** (`tests/files.test.js`) - File upload and distribution
+- **Statistics Tests** (`tests/statistics.test.js`) - Statistics retrieval and clearing
+- **Group Conversation Tests** (`tests/groupconvo.test.js`) - Group conversation management
+- **Callbacks Tests** (`tests/callbacks.test.js`) - Message callback configuration
+- **Directory Tests** (`tests/directory.test.js`) - Directory retrieval
+
+### Test Coverage
+
+All major API endpoints are covered with integration tests that:
+- Mock the WickrIO bot API to avoid requiring an actual bot connection
+- Test both V1 and V2 API endpoints
+- Verify request validation and error handling
+- Confirm proper authentication and authorization
+- Test successful operations and edge cases
+
+### Writing New Tests
+
+To add new tests:
+1. Create a new test file in the `tests/` directory
+2. Import the test helpers from `tests/setup/test-server.js`
+3. Use the mock responses from `tests/setup/mocks.js`
+4. Follow the existing test patterns for consistency
+
+Example:
+```javascript
+import { describe, it, expect, beforeAll } from 'vitest'
+import request from 'supertest'
+import { createTestServer, createAuthHeader } from './setup/test-server.js'
+
+describe('My New Tests', () => {
+  let app
+  
+  beforeAll(async () => {
+    app = await createTestServer()
+  })
+  
+  it('should test something', async () => {
+    const response = await request(app)
+      .get('/some/endpoint')
+      .set('Authorization', createAuthHeader())
+    
+    expect(response.status).toBe(200)
+  })
+})
+```
+
 # License
 
 This software is distributed under the [Apache License, version 2.0](https://www.apache.org/licenses/LICENSE-2.0.html)

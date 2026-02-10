@@ -11,11 +11,19 @@ const path = require('node:path')
 const morgan = require('morgan')
 
 const bot = new WickrIOBotAPI.WickrIOBot()
-const WickrIOAPI = bot.apiService().WickrIOAPI
+let WickrIOAPI = bot.apiService().WickrIOAPI
+
+if (process.env.NODE_ENV === 'test') {
+  // Inject mock API in test mode
+  module.exports.setMockAPI = mockAPI => {
+    WickrIOAPI = mockAPI
+  }
+} else {
+  process.stdin.resume() //so the program will not close instantly
+  process.setMaxListeners(0)
+}
 
 process.title = 'wickrioWebApi'
-process.stdin.resume() //so the program will not close instantly
-process.setMaxListeners(0)
 
 async function exitHandler(options, err) {
   try {
@@ -43,24 +51,40 @@ process.on('unhandledRejection', (reason, p) => {
   console.error('Unhandled Rejection at: Promise', p, 'reason:', reason)
 })
 
-var bot_username, bot_port, bot_api_key, bot_api_auth_token, ssl_key_location, ssl_crt_location
+var bot_username,
+  bot_port,
+  bot_api_key,
+  bot_api_auth_token,
+  https_choice,
+  ssl_key_location,
+  ssl_crt_location
 
 async function main() {
-  bot.processesJsonToProcessEnv()
+  if (process.env.NODE_ENV === 'test') {
+    const testTokens = JSON.parse(fs.readFileSync('./tests/configTokens.test.json', 'utf8'))
+    process.env.tokens = JSON.stringify(testTokens)
+  } else {
+    bot.processesJsonToProcessEnv()
+  }
+
   try {
     var tokens = JSON.parse(process.env.tokens)
-    var status = await bot.start(tokens.WICKRIO_BOT_NAME.value)
-    if (!status) {
-      exitHandler(null, {
-        exit: true,
-        reason: 'Client not able to start',
-      })
+
+    // Skip bot.start() in test mode since it requires a real WickrIO bot
+    if (process.env.NODE_ENV !== 'test') {
+      var status = await bot.start(tokens.WICKRIO_BOT_NAME.value)
+      if (!status) {
+        exitHandler(null, {
+          exit: true,
+          reason: 'Client not able to start',
+        })
+      }
+
+      bot.setAdminOnly(false)
     }
   } catch (err) {
     logger.error(err)
   }
-
-  bot.setAdminOnly(false)
 
   bot_username = tokens.WICKRIO_BOT_NAME.value
   bot_port = tokens.BOT_PORT.value
@@ -106,7 +130,7 @@ async function main() {
     https.createServer(credentials, app).listen(bot_port, () => {
       console.log('HTTPS Server running on port', bot_port)
     })
-  } else {
+  } else if (process.env.NODE_ENV !== 'test') {
     app.listen(bot_port, () => {
       console.log('We are live on ' + bot_port)
     })
@@ -312,6 +336,7 @@ async function main() {
         return res.send('Need a list of users OR a vGroupID to send a message.')
       } else {
         let { ttl = '', bor = '' } = req.body
+
         if (req.file === undefined) {
           console.log('attachment is not defined!')
           res.statusCode = 400
@@ -795,4 +820,10 @@ function isJson(str) {
   return str
 }
 
-main()
+// Export app for testing
+module.exports = { app, bot, main }
+
+// Only run main if this file is executed directly (not imported)
+if (require.main === module) {
+  main()
+}
