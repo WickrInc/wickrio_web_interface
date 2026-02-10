@@ -1,0 +1,7 @@
+{
+  "WICKRIO_BOT_NAME": { "value": "testbot" },
+  "BOT_PORT": { "value": "3000" },
+  "BOT_API_KEY": { "value": "test-api-key" },
+  "BOT_API_AUTH_TOKEN": { "value": "test-auth-token" },
+  "HTTPS_CHOICE": { "value": "no" }
+}
