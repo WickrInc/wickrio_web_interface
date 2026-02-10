@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import request from 'supertest'
+import path from 'path'
 import {
   createTestServer,
   createAuthHeader,
@@ -269,6 +270,47 @@ describe('Messages API Tests', () => {
         '',
         ''
       )
+    })
+
+    it('should permit file sends from paths within the attachments directory', async () => {
+      const filename = path.join(process.cwd(), 'attachments', 'document.pdf')
+      const response = await request(app)
+        .post('/WickrIO/V2/Apps/Messages')
+        .set('Authorization', authHeader)
+        .set('x-api-key', apiKey)
+        .send({
+          users: [{ name: 'user1' }],
+          attachment: {
+            filename,
+            displayname: 'document.pdf',
+          },
+        })
+
+      expect(response.status).toBe(200)
+      expect(mockWickrIOAPI.cmdSend1to1Attachment).toHaveBeenCalledWith(
+        ['user1'],
+        filename,
+        'document.pdf',
+        '',
+        ''
+      )
+    })
+
+    it('should reject file sends from paths outside of attachments directory', async () => {
+      const response = await request(app)
+        .post('/WickrIO/V2/Apps/Messages')
+        .set('Authorization', authHeader)
+        .set('x-api-key', apiKey)
+        .send({
+          users: [{ name: 'user1' }],
+          attachment: {
+            filename: '/tmp/document.pdf',
+            displayname: 'document.pdf',
+          },
+        })
+
+      expect(response.status).toBe(400)
+      expect(mockWickrIOAPI.cmdSend1to1Attachment).not.toHaveBeenCalled()
     })
   })
 
