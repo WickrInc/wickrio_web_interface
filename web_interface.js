@@ -145,7 +145,7 @@ async function main() {
     if (error instanceof SyntaxError) {
       console.log('bodyParser:', error)
       res.statusCode = 400
-      res.type('txt').send(error.toString())
+      res.type('txt').send('Invalid JSON format in request body')
     } else {
       next()
     }
@@ -207,26 +207,20 @@ async function main() {
     } else if (!req.body.message && !req.body.attachment) {
       return res.send('Need a message OR an attachment to send a message.')
     }
-    var ttl = '',
-      bor = ''
-    let messagemeta = {}
-    if (req.body.ttl) ttl = req.body.ttl.toString()
-    if (req.body.bor) bor = req.body.bor.toString()
+    const ttl = req.body.ttl ? req.body.ttl.toString() : ''
+    const bor = req.body.bor ? req.body.bor.toString() : ''
+    const messagemeta = req.body.messagemeta ? JSON.stringify(req.body.messagemeta) : ''
 
-    if (req.body.messagemeta) messagemeta = JSON.stringify(req.body.messagemeta)
-    else messagemeta = ''
     if (req.body.users) {
-      var users = []
-      for (var i in req.body.users) {
-        users.push(req.body.users[i].name)
-      }
+      // This is a message to be sent in 1:1s to at least 1 user
+      const users = req.body.users.map(user => user.name)
+
       if (req.body.attachment) {
         var attachment
         var displayName = ''
         if (req.body.attachment.url) {
           if (!req.body.attachment.displayname) {
-            res.statusCode = 400
-            return res.send('Attachment displayname must be set')
+            return res.status(400).send('Attachment displayname must be set')
           }
           displayName = req.body.attachment.displayname
           attachment = req.body.attachment.url
@@ -246,8 +240,7 @@ async function main() {
           res.send(s1t1a)
         } catch (err) {
           console.log(err)
-          res.statusCode = 400
-          res.send(err.toString())
+          return res.status(400).send('Failed to send attachment')
         }
       } else {
         var message = req.body.message
@@ -265,19 +258,18 @@ async function main() {
           res.send(csm)
         } catch (err) {
           console.log(err)
-          res.statusCode = 400
-          res.send(err.toString())
+          return res.status(400).send('Failed to send message')
         }
       }
     } else if (req.body.vgroupid) {
-      var vGroupID = req.body.vgroupid
+      // This is a group or room message
+      const vGroupID = req.body.vgroupid
       if (req.body.attachment) {
         var attachment
         var displayName = ''
         if (req.body.attachment.url) {
           if (!req.body.attachment.displayname) {
-            res.statusCode = 400
-            return res.send('Attachment displayname must be set.')
+            return res.status(400).send('Attachment displayname must be set.')
           }
           displayName = req.body.attachment.displayname
           attachment = req.body.attachment.url
@@ -299,8 +291,7 @@ async function main() {
           res.send(csra)
         } catch (err) {
           console.log(err)
-          res.statusCode = 400
-          res.send(err.toString())
+          return res.status(400).send('Failed to send attachment')
         }
       } else {
         var message = req.body.message
@@ -318,8 +309,7 @@ async function main() {
           res.send(csrm)
         } catch (err) {
           console.log(err)
-          res.statusCode = 400
-          res.send(err.toString())
+          return res.status(400).send('Failed to send message')
         }
       }
     }
@@ -332,16 +322,13 @@ async function main() {
       res.set('Authorization', 'Basic base64_auth_token')
 
       if (!req.body.users && !req.body.vgroupid) {
-        res.statusCode = 400
-        return res.send('Need a list of users OR a vGroupID to send a message.')
+        return res.status(400).send('Need a list of users OR a vGroupID to send a message.')
       } else {
         let { ttl = '', bor = '' } = req.body
 
         if (req.file === undefined) {
           console.log('attachment is not defined!')
-          res.statusCode = 400
-          res.send('No attachment included in request')
-          return
+          return res.status(400).send('No attachment included in request')
         } else {
           const userAttachments = path.join(process.cwd(), 'attachments')
           // multer/busboy should provide only the basename of the file, but call
@@ -370,9 +357,7 @@ async function main() {
               res.send(csra)
             } catch (err) {
               console.log({ err, vgroupid: req.body.vgroupid }, 'Error sending attachment to room')
-              res.statusCode = 400
-              res.send(err.toString())
-              return
+              return res.status(400).send('Failed to send attachment')
             }
           } else if (req.body.users) {
             console.log({ bodyusers: req.body.users })
@@ -383,9 +368,7 @@ async function main() {
               }
             } catch (err) {
               console.log(err)
-              res.statusCode = 400
-              res.send('error processing users JSON data')
-              return
+              return res.status(400).send('error processing users JSON data')
             }
 
             try {
@@ -399,9 +382,7 @@ async function main() {
               res.send(reply)
             } catch (err) {
               console.log({ err }, 'Error sending attachment to users')
-              res.statusCode = 400
-              res.send('error sending attachment!')
-              return
+              return res.status(400).send('error sending attachment!')
             }
           }
         }
@@ -424,8 +405,7 @@ async function main() {
         console.log(statistics)
       } catch (err) {
         console.log(err)
-        res.statusCode = 400
-        res.type('txt').send(err.toString())
+        return res.status(400).type('txt').send('Failed to retrieve statistics')
       }
     })
 
@@ -439,8 +419,7 @@ async function main() {
         res.send('statistics cleared successfully')
       } catch (err) {
         console.log(err)
-        res.statusCode = 400
-        res.type('txt').send(err.toString())
+        return res.status(400).type('txt').send('Failed to clear statistics')
       }
     })
 
@@ -477,8 +456,7 @@ async function main() {
       res.type('json').send(car)
     } catch (err) {
       console.log(err)
-      res.statusCode = 400
-      res.type('txt').send(err.toString())
+      return res.status(400).type('txt').send('Failed to create room')
     }
   })
 
@@ -491,8 +469,7 @@ async function main() {
         res.type('json').send(cgr)
       } catch (err) {
         console.log(err)
-        res.statusCode = 400
-        res.type('txt').send(err.toString())
+        return res.status(400).type('txt').send('Failed to retrieve rooms')
       }
     } else {
       try {
@@ -500,8 +477,7 @@ async function main() {
         res.send(cgr)
       } catch (err) {
         console.log(err)
-        res.statusCode = 400
-        res.type('txt').send(err.toString())
+        return res.status(400).type('txt').send('Failed to retrieve room')
       }
     }
   })
@@ -516,8 +492,7 @@ async function main() {
         res.send(cgr)
       } catch (err) {
         console.log(err)
-        res.statusCode = 400
-        res.type('txt').send(err.toString())
+        return res.status(400).type('txt').send('Failed to retrieve room')
       }
     })
 
@@ -533,8 +508,7 @@ async function main() {
           res.send(bot_username + ' left room successfully')
         } catch (err) {
           console.log(err)
-          res.statusCode = 400
-          res.type('txt').send(err.toString())
+          return res.status(400).type('txt').send('Failed to leave room')
         }
       } else {
         try {
@@ -543,8 +517,7 @@ async function main() {
           res.send('Room deleted successfully')
         } catch (err) {
           console.log(err)
-          res.statusCode = 400
-          res.type('txt').send(err.toString())
+          return res.status(400).type('txt').send('Failed to delete room')
         }
       }
       res.end()
@@ -590,8 +563,7 @@ async function main() {
         res.send('Room modified successfully')
       } catch (err) {
         console.log(err)
-        res.statusCode = 400
-        res.type('txt').send(err.toString())
+        return res.status(400).type('txt').send('Failed to modify room')
       }
     })
 
@@ -614,8 +586,7 @@ async function main() {
         res.type('json').send(cagc)
       } catch (err) {
         console.log(err)
-        res.statusCode = 400
-        res.type('txt').send(err.toString())
+        return res.status(400).type('txt').send('Failed to create group conversation')
       }
     })
 
@@ -627,8 +598,7 @@ async function main() {
         res.type('json').send(cggc)
       } catch (err) {
         console.log(err)
-        res.statusCode = 400
-        res.type('txt').send(err.toString())
+        return res.status(400).type('txt').send('Failed to retrieve group conversations')
       }
     })
 
@@ -641,8 +611,7 @@ async function main() {
         res.type('json').send(cggc)
       } catch (err) {
         console.log(err)
-        res.statusCode = 400
-        res.type('txt').send(err.toString())
+        return res.status(400).type('txt').send('Failed to retrieve group conversation')
       }
     })
 
@@ -656,8 +625,7 @@ async function main() {
         res.type('txt').send(bot_username + ' has left the GroupConvo.')
       } catch (err) {
         console.log(err)
-        res.statusCode = 400
-        res.type('txt').send(err.toString())
+        return res.status(400).type('txt').send('Failed to leave group conversation')
       }
     })
 
@@ -670,8 +638,10 @@ async function main() {
       if (count > maxCount) {
         count = maxCount
       } else if (isNaN(count) || count < 1) {
-        res.statusCode = 400
-        return res.type('txt').send(`Invalid count parameter. Must be a number greater than 0.`)
+        return res
+          .status(400)
+          .type('txt')
+          .send(`Invalid count parameter. Must be a number greater than 0.`)
       }
     }
 
@@ -681,8 +651,7 @@ async function main() {
         var message = await WickrIOAPI.cmdGetReceivedMessage()
       } catch (err) {
         console.log({ err }, 'Error calling cmdGetReceivedMessage')
-        res.statusCode = 400
-        return res.type('txt').send(err.toString())
+        return res.status(400).type('txt').send('Failed to retrieve messages')
       }
       if (message === '{ }' || message === '' || !message) {
         continue
@@ -714,8 +683,7 @@ async function main() {
           res.send('Recall message sent')
         } catch (err) {
           console.log(err)
-          res.statusCode = 400
-          res.type('txt').send(err.toString())
+          return res.status(400).type('txt').send('Failed to recall message')
         }
       } else {
         try {
@@ -724,8 +692,7 @@ async function main() {
           res.send('Delete message sent')
         } catch (err) {
           console.log(err)
-          res.statusCode = 400
-          res.type('txt').send(err.toString())
+          return res.status(400).type('txt').send('Failed to delete message')
         }
       }
       res.end()
@@ -742,8 +709,7 @@ async function main() {
         res.type('txt').send(csmc)
       } catch (err) {
         console.log(err)
-        res.statusCode = 400
-        res.type('txt').send(err.toString())
+        return res.status(400).type('txt').send('Failed to set message callback')
       }
     })
 
@@ -755,8 +721,7 @@ async function main() {
         res.type('txt').send(cgmc)
       } catch (err) {
         console.log(err)
-        res.statusCode = 400
-        res.type('txt').send(err.toString())
+        return res.status(400).type('txt').send('Failed to retrieve message callback')
       }
     })
 
@@ -769,8 +734,7 @@ async function main() {
         res.type('txt').send(cdmc)
       } catch (err) {
         console.log(err)
-        res.statusCode = 400
-        res.type('txt').send(err.toString())
+        return res.status(400).type('txt').send('Failed to delete message callback')
       }
     })
 
@@ -780,21 +744,12 @@ async function main() {
       res.type('json').send(cgd)
     } catch (err) {
       console.log(err)
-      res.statusCode = 400
-      res.type('txt').send(err.toString())
+      return res.status(400).type('txt').send('Failed to retrieve directory')
     }
   })
 
-  // What to do for ALL requests for ALL Paths
-  // that are not handled above
   app.all('*', function (req, res) {
-    console.log('*** 404 ***')
-    console.log('404 for url: ' + req.url)
-    console.log('***********')
-    return res
-      .type('txt')
-      .status(404)
-      .send('Endpoint ' + req.url + ' not found')
+    return res.type('txt').status(404).send(`Endpoint ${req.url} not found`)
   })
 }
 
