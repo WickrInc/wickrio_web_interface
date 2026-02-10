@@ -11,6 +11,8 @@ const path = require('node:path')
 const morgan = require('morgan')
 
 const bot = new WickrIOBotAPI.WickrIOBot()
+const userAttachmentsDir = path.join(process.cwd(), 'attachments')
+
 let WickrIOAPI = bot.apiService().WickrIOAPI
 
 if (process.env.NODE_ENV === 'test') {
@@ -81,6 +83,7 @@ async function main() {
       }
 
       bot.setAdminOnly(false)
+      fs.mkdirSync(userAttachmentsDir, { recursive: true })
     }
   } catch (err) {
     logger.error(err)
@@ -211,6 +214,15 @@ async function main() {
     const bor = req.body.bor ? req.body.bor.toString() : ''
     const messagemeta = req.body.messagemeta ? JSON.stringify(req.body.messagemeta) : ''
 
+    if (
+      req.body.attachment?.filename &&
+      path.dirname(req.body.attachment.filename) !== userAttachmentsDir
+    ) {
+      console.info('Requested upload for file not in attachments directory, rejecting with 400')
+      // Prevent sending files from outside of the attachments directory
+      return res.status(400).send('Path of file must be within the attachments directory')
+    }
+
     if (req.body.users) {
       // This is a message to be sent in 1:1s to at least 1 user
       const users = req.body.users.map(user => user.name)
@@ -330,14 +342,12 @@ async function main() {
           console.log('attachment is not defined!')
           return res.status(400).send('No attachment included in request')
         } else {
-          const userAttachments = path.join(process.cwd(), 'attachments')
           // multer/busboy should provide only the basename of the file, but call
           // path.basename again to be certain there's no chance of path traversal
           const filename = path.basename(req.file.originalname)
-          const userNewFile = path.join(userAttachments, filename)
-          const inFile = path.join(userAttachments, req.file.filename)
+          const userNewFile = path.join(userAttachmentsDir, filename)
+          const inFile = path.join(userAttachmentsDir, req.file.filename)
 
-          fs.mkdirSync(userAttachments, { recursive: true })
           if (fs.existsSync(userNewFile)) {
             fs.unlinkSync(userNewFile)
           }
