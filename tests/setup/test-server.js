@@ -9,7 +9,7 @@ export async function createTestServer() {
   }
 
   // Dynamic import to ensure mocks are loaded first
-  const webInterface = await import('../../web_interface.js')
+  const webInterface = await import('../../dist/web_interface.js')
   const { app, main, setMockAPI } = webInterface
 
   // Inject the mock API before initializing
