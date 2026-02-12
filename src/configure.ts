@@ -1,15 +1,14 @@
-const WickrIOBotAPI = require('wickrio-bot-api')
-const util = require('util')
+import WickrIOBotAPI from 'wickrio-bot-api'
 
 require('dotenv').config({
   path: `.env.configure`,
 })
 
-var wickrIOConfigure
+let wickrIOConfigure: InstanceType<typeof WickrIOBotAPI.WickrIOConfigure>
 
 process.stdin.resume() //so the program will not close instantly
 
-function exitHandler(options, err) {
+function exitHandler(options: { exit?: boolean; pid?: boolean }, err?: unknown): void {
   try {
     if (err) {
       process.kill(process.pid)
@@ -20,8 +19,8 @@ function exitHandler(options, err) {
     } else if (options.pid) {
       process.kill(process.pid)
     }
-  } catch (err) {
-    console.log(err)
+  } catch (e) {
+    console.log(e)
   }
 }
 
@@ -38,14 +37,19 @@ process.on(
   exitHandler.bind(null, {
     exit: true,
     reason: 'uncaughtException',
-  })
+  } as { exit: boolean; pid?: boolean })
 )
 
 main()
 
-async function main() {
-  const tokens = require('./configTokens.json')
-  var fullName = process.cwd() + '/processes.json'
+async function main(): Promise<void> {
+  const tokens = require('../configTokens.json') as {
+    supportAdministrators: boolean
+    supportVerification: boolean
+    integration: string
+    tokens: WickrIOBotAPI.WickrIOConfigureTokens[]
+  }
+  const fullName = process.cwd() + '/processes.json'
   wickrIOConfigure = new WickrIOBotAPI.WickrIOConfigure(
     tokens.tokens,
     fullName,

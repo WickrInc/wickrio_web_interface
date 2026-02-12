@@ -11,8 +11,8 @@ export default defineConfig({
       exclude: [
         'node_modules/',
         'tests/',
+        'dist/',
         '*.config.js',
-        'configure.js',
         'install.sh',
         'start.sh',
         'stop.sh',
