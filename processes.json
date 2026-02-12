@@ -2,7 +2,7 @@
   "apps": [{
     "name": "WickrIO-Web-Interface",
     "args": [],
-    "script": "node web_interface.js",
+    "script": "node dist/web_interface.js",
     "exec_interpreter": "none",
     "autorestart": false,
     "watch": [
