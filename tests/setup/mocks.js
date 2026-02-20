@@ -135,7 +135,7 @@ vi.mock('wickrio-bot-api', () => ({
 }))
 
 // Mock logger.js
-vi.mock('../../logger.js', () => ({
+vi.mock('../../dist/logger.js', () => ({
   default: mockLogger,
   info: mockLogger.info,
   error: mockLogger.error,

@@ -1,4 +1,7 @@
 node_modules/
+
+# TypeScript compiled output (source of truth is in src/)
+dist/
 *.key
 *.cert
 *.output
