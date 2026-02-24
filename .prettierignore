@@ -1,0 +1,24 @@
+# Dependencies
+node_modules
+package-lock.json
+
+# Build output
+build
+dist
+*.min.js
+
+# Logs
+*.log
+wpm2.output
+
+# Generated files
+coverage
+
+# Config files that shouldn't be formatted
+.prettierrc
+.eslintrc
+
+README.md
+wpm.json
+configTokens.json
+processes.json

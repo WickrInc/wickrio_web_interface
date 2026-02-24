@@ -19,5 +19,5 @@ software.tar.gz
 coverage
 mysql_move_data.log
 mysqld.cnf
-.github
 .nyc_output
+logs/
