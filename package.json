@@ -2,7 +2,7 @@
   "name": "wickrio_web_interface",
   "version": "6.60",
   "description": "WickrIO Node.JS API Web Interface",
-  "main": "web_interface.js",
+  "main": "dist/web_interface.js",
   "author": "Paul Cushman (pcushman@wickr.com)",
   "license": "ISC",
   "dependencies": {
@@ -10,21 +10,29 @@
     "helmet": "^3.20.0",
     "morgan": "^1.10.1",
     "multer": "^1.4.5-lts.1",
-    "wickrio-bot-api": "^7.1.8"
+    "wickrio-bot-api": "^7.1.9"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/morgan": "^1.9.10",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^25.2.3",
     "prettier": "^3.8.1",
     "supertest": "^7.2.2",
+    "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   },
   "scripts": {
     "start": "nohup wpm2 start --no-metrics ./wpm.json >>wpm2.output 2>&1 & echo $! > $(cat pidLocation.json)",
     "stop": "kill $(cat $(cat pidLocation.json))",
     "restart": "kill $(cat $(cat pidLocation.json)) && nohup wpm2 start --no-metrics ./wpm.json >>wpm2.output 2>&1 & echo $! > $(cat pidLocation.json)",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "clean": "rm -rf ./dist"
   },
   "repository": {
     "type": "git",

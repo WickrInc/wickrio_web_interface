@@ -1,14 +1,16 @@
-const express = require('express')
-const https = require('https')
-const helmet = require('helmet')
-const WickrIOBotAPI = require('wickrio-bot-api')
-const fs = require('fs')
+import express, { Request, Response, NextFunction } from 'express'
+import https from 'https'
+import helmet from 'helmet'
+import WickrIOBotAPI from 'wickrio-bot-api'
+import fs from 'fs'
+import logger from './logger'
+import multer from 'multer'
+import path from 'node:path'
+import morgan from 'morgan'
+import { GroupConvoRequest, MessageBody, RoomRequest, Tokens, UserEntry } from './types'
+
 const app = express()
-const logger = require('./logger')
-app.use(helmet()) //security http headers
-const multer = require('multer')
-const path = require('node:path')
-const morgan = require('morgan')
+app.use(helmet())
 
 const bot = new WickrIOBotAPI.WickrIOBot()
 const userAttachmentsDir = path.join(process.cwd(), 'attachments')
@@ -17,7 +19,7 @@ let WickrIOAPI = bot.apiService().WickrIOAPI
 
 if (process.env.NODE_ENV === 'test') {
   // Inject mock API in test mode
-  module.exports.setMockAPI = mockAPI => {
+  ;(module.exports as Record<string, unknown>).setMockAPI = (mockAPI: typeof WickrIOAPI): void => {
     WickrIOAPI = mockAPI
   }
 } else {
@@ -27,17 +29,20 @@ if (process.env.NODE_ENV === 'test') {
 
 process.title = 'wickrioWebApi'
 
-async function exitHandler(options, err) {
+async function exitHandler(
+  options: { exit?: boolean; pid?: boolean } | null,
+  err?: unknown
+): Promise<void> {
   try {
-    var closed = await bot.close()
-    if (err || options.exit) {
+    await bot.close()
+    if (err || options?.exit) {
       logger.info('Exit reason:', err)
       process.exit()
-    } else if (options.pid) {
+    } else if (options?.pid) {
       process.kill(process.pid)
     }
-  } catch (err) {
-    logger.error(err)
+  } catch (e) {
+    logger.error(e)
   }
 }
 
@@ -49,19 +54,19 @@ process.on('SIGUSR1', exitHandler.bind(null, { pid: true }))
 process.on('SIGUSR2', exitHandler.bind(null, { pid: true }))
 
 process.on('uncaughtException', exitHandler.bind(null, { exit: true }))
-process.on('unhandledRejection', (reason, p) => {
+process.on('unhandledRejection', (reason: unknown, p: Promise<unknown>) => {
   console.error('Unhandled Rejection at: Promise', p, 'reason:', reason)
 })
 
-var bot_username,
-  bot_port,
-  bot_api_key,
-  bot_api_auth_token,
-  https_choice,
-  ssl_key_location,
-  ssl_crt_location
+let bot_username: string,
+  bot_port: string,
+  bot_api_key: string,
+  bot_api_auth_token: string,
+  https_choice: string,
+  ssl_key_location: string,
+  ssl_crt_location: string
 
-async function main() {
+async function main(): Promise<void> {
   if (process.env.NODE_ENV === 'test') {
     const testTokens = JSON.parse(fs.readFileSync('./tests/configTokens.test.json', 'utf8'))
     process.env.tokens = JSON.stringify(testTokens)
@@ -70,45 +75,46 @@ async function main() {
   }
 
   try {
-    var tokens = JSON.parse(process.env.tokens)
+    const tokens: Tokens = JSON.parse(process.env.tokens!)
 
     // Skip bot.start() in test mode since it requires a real WickrIO bot
     if (process.env.NODE_ENV !== 'test') {
-      var status = await bot.start(tokens.WICKRIO_BOT_NAME.value)
+      const status = await bot.start(tokens.WICKRIO_BOT_NAME.value)
       if (!status) {
         exitHandler(null, {
           exit: true,
           reason: 'Client not able to start',
-        })
+        } as unknown)
       }
 
       bot.setAdminOnly(false)
       fs.mkdirSync(userAttachmentsDir, { recursive: true })
     }
+
+    bot_username = tokens.WICKRIO_BOT_NAME.value
+    bot_port = tokens.BOT_PORT.value
+    bot_api_key = tokens.BOT_API_KEY.value
+    bot_api_auth_token = tokens.BOT_API_AUTH_TOKEN.value
+    https_choice = tokens.HTTPS_CHOICE.value
   } catch (err) {
     logger.error(err)
   }
-
-  bot_username = tokens.WICKRIO_BOT_NAME.value
-  bot_port = tokens.BOT_PORT.value
-  bot_api_key = tokens.BOT_API_KEY.value
-  bot_api_auth_token = tokens.BOT_API_AUTH_TOKEN.value
-  https_choice = tokens.HTTPS_CHOICE.value
 
   logger.info('bot_username=' + bot_username)
   logger.info('bot_port=' + bot_port)
   logger.info('https_choice=' + https_choice)
 
   if (https_choice === 'yes' || https_choice === 'y') {
-    ssl_key_location = tokens.SSL_KEY_LOCATION.value
-    ssl_crt_location = tokens.SSL_CRT_LOCATION.value
+    const tokens: Tokens = JSON.parse(process.env.tokens!)
+    ssl_key_location = tokens.SSL_KEY_LOCATION!.value
+    ssl_crt_location = tokens.SSL_CRT_LOCATION!.value
 
     try {
       if (!fs.existsSync(ssl_key_location)) {
         exitHandler(null, {
           exit: true,
           reason: 'ERROR: Cannot access ' + ssl_key_location,
-        })
+        } as unknown)
       }
     } catch (err) {
       console.error(err)
@@ -119,7 +125,7 @@ async function main() {
         exitHandler(null, {
           exit: true,
           reason: 'ERROR: Cannot access ' + ssl_crt_location,
-        })
+        } as unknown)
       }
     } catch (err) {
       console.error(err)
@@ -144,7 +150,7 @@ async function main() {
   // parse application/json
   app.use(express.json())
 
-  app.use(function (error, req, res, next) {
+  app.use(function (error: unknown, req: Request, res: Response, next: NextFunction) {
     if (error instanceof SyntaxError) {
       console.log('bodyParser:', error)
       res.statusCode = 400
@@ -157,19 +163,19 @@ async function main() {
   // HTTP request/response logging middleware
   app.use(
     morgan('combined', {
-      stream: { write: msg => logger.info(msg.trim()) },
+      stream: { write: (msg: string) => logger.info(msg.trim()) },
     })
   )
 
-  app.all('*', function (req, res, next) {
-    var authHeader = req.get('Authorization')
-    var authToken
+  app.all('*', function (req: Request, res: Response, next: NextFunction) {
+    const authHeader = req.get('Authorization')
+    let authToken: string | undefined
     if (authHeader) {
       if (authHeader.indexOf(' ') == -1) {
         authToken = authHeader
       } else {
-        authHeader = authHeader.split(' ')
-        authToken = authHeader[1]
+        const parts = authHeader.split(' ')
+        authToken = parts[1]
       }
     } else {
       res.set('Authorization', 'Basic base64_auth_token')
@@ -180,7 +186,7 @@ async function main() {
           'Access denied: invalid Authorization Header format. Correct format: "Authorization: Basic base64_auth_token"'
         )
     }
-    if (!checkCreds(authToken)) {
+    if (!checkCreds(authToken!)) {
       res.set('Authorization', 'Basic base64_auth_token')
       return res.type('txt').status(401).send('Access denied: invalid basic-auth token.')
     }
@@ -188,10 +194,10 @@ async function main() {
     next()
   })
 
-  var endpoint = '/WickrIO/V1/Apps/' + bot_api_key
+  const endpoint = '/WickrIO/V1/Apps/' + bot_api_key
   const xapiEndpoint = '/WickrIO/V2/Apps'
 
-  app.use(xapiEndpoint, function (req, res, next) {
+  app.use(xapiEndpoint, function (req: Request, res: Response, next: NextFunction) {
     const xapi = req.get('x-api-key')
     if (xapi != bot_api_key) {
       return res.type('txt').status(401).send('Access denied: invalid api-key.')
@@ -199,50 +205,55 @@ async function main() {
     next()
   })
 
-  var upload = multer({ dest: 'attachments/' })
+  const upload = multer({ dest: 'attachments/' })
 
-  app.route([xapiEndpoint + '/Messages', endpoint + '/Messages']).post(async function (req, res) {
+  app.route([xapiEndpoint + '/Messages', endpoint + '/Messages']).post(async function (
+    req: Request,
+    res: Response
+  ) {
     res.set('Content-Type', 'text/plain')
     res.set('Authorization', 'Basic base64_auth_token')
 
-    if (!req.body.users && !req.body.vgroupid) {
+    const body = req.body as MessageBody
+
+    if (!body.users && !body.vgroupid) {
       return res.send('Need a list of users OR a vGroupID to send a message.')
-    } else if (!req.body.message && !req.body.attachment) {
+    } else if (!body.message && !body.attachment) {
       return res.send('Need a message OR an attachment to send a message.')
     }
-    const ttl = req.body.ttl ? req.body.ttl.toString() : ''
-    const bor = req.body.bor ? req.body.bor.toString() : ''
-    const messagemeta = req.body.messagemeta ? JSON.stringify(req.body.messagemeta) : ''
+    const ttl = body.ttl ? body.ttl.toString() : ''
+    const bor = body.bor ? body.bor.toString() : ''
+    const messagemeta = body.messagemeta ? JSON.stringify(body.messagemeta) : ''
 
     if (
-      req.body.attachment?.filename &&
-      path.dirname(req.body.attachment.filename) !== userAttachmentsDir
+      body.attachment?.filename &&
+      path.dirname(body.attachment.filename) !== userAttachmentsDir
     ) {
       console.info('Requested upload for file not in attachments directory, rejecting with 400')
       // Prevent sending files from outside of the attachments directory
       return res.status(400).send('Path of file must be within the attachments directory')
     }
 
-    if (req.body.users) {
+    if (body.users) {
       // This is a message to be sent in 1:1s to at least 1 user
-      const users = req.body.users.map(user => user.name)
+      const users = body.users.map((user: UserEntry) => user.name)
 
-      if (req.body.attachment) {
-        var attachment
-        var displayName = ''
-        if (req.body.attachment.url) {
-          if (!req.body.attachment.displayname) {
+      if (body.attachment) {
+        let attachment: string
+        let displayName = ''
+        if (body.attachment.url) {
+          if (!body.attachment.displayname) {
             return res.status(400).send('Attachment displayname must be set')
           }
-          displayName = req.body.attachment.displayname
-          attachment = req.body.attachment.url
+          displayName = body.attachment.displayname
+          attachment = body.attachment.url
         } else {
-          if (req.body.attachment.displayname) displayName = req.body.attachment.displayname
-          attachment = req.body.attachment.filename
+          if (body.attachment.displayname) displayName = body.attachment.displayname
+          attachment = body.attachment.filename!
         }
         console.log('displayName:', displayName)
         try {
-          var s1t1a = await WickrIOAPI.cmdSend1to1Attachment(
+          const s1t1a = await WickrIOAPI.cmdSend1to1Attachment(
             users,
             attachment,
             displayName,
@@ -255,9 +266,9 @@ async function main() {
           return res.status(400).send('Failed to send attachment')
         }
       } else {
-        var message = req.body.message
+        const message = body.message!
         try {
-          var csm = await WickrIOAPI.cmdSend1to1Message(
+          const csm = await WickrIOAPI.cmdSend1to1Message(
             users,
             message,
             ttl,
@@ -273,26 +284,26 @@ async function main() {
           return res.status(400).send('Failed to send message')
         }
       }
-    } else if (req.body.vgroupid) {
+    } else if (body.vgroupid) {
       // This is a group or room message
-      const vGroupID = req.body.vgroupid
-      if (req.body.attachment) {
-        var attachment
-        var displayName = ''
-        if (req.body.attachment.url) {
-          if (!req.body.attachment.displayname) {
+      const vGroupID = body.vgroupid
+      if (body.attachment) {
+        let attachment: string
+        let displayName = ''
+        if (body.attachment.url) {
+          if (!body.attachment.displayname) {
             return res.status(400).send('Attachment displayname must be set.')
           }
-          displayName = req.body.attachment.displayname
-          attachment = req.body.attachment.url
+          displayName = body.attachment.displayname
+          attachment = body.attachment.url
         } else {
-          if (req.body.attachment.displayname) displayName = req.body.attachment.displayname
-          attachment = req.body.attachment.filename
+          if (body.attachment.displayname) displayName = body.attachment.displayname
+          attachment = body.attachment.filename!
         }
         console.log('attachment:', attachment)
         console.log('displayName:', displayName)
         try {
-          var csra = await WickrIOAPI.cmdSendRoomAttachment(
+          const csra = await WickrIOAPI.cmdSendRoomAttachment(
             vGroupID,
             attachment,
             displayName,
@@ -306,9 +317,9 @@ async function main() {
           return res.status(400).send('Failed to send attachment')
         }
       } else {
-        var message = req.body.message
+        const message = body.message!
         try {
-          var csrm = await WickrIOAPI.cmdSendRoomMessage(
+          const csrm = await WickrIOAPI.cmdSendRoomMessage(
             vGroupID,
             message,
             ttl,
@@ -329,14 +340,16 @@ async function main() {
 
   app
     .route([xapiEndpoint + '/File', endpoint + '/File'])
-    .post(upload.single('attachment'), async function (req, res) {
+    .post(upload.single('attachment'), async function (req: Request, res: Response) {
       res.set('Content-Type', 'text/plain')
       res.set('Authorization', 'Basic base64_auth_token')
 
-      if (!req.body.users && !req.body.vgroupid) {
+      const body = req.body as { users?: string; vgroupid?: string; ttl?: string; bor?: string }
+
+      if (!body.users && !body.vgroupid) {
         return res.status(400).send('Need a list of users OR a vGroupID to send a message.')
       } else {
-        let { ttl = '', bor = '' } = req.body
+        const { ttl = '', bor = '' } = body
 
         if (req.file === undefined) {
           console.log('attachment is not defined!')
@@ -355,10 +368,10 @@ async function main() {
           fs.renameSync(inFile, userNewFile)
           console.log({ inFile, userNewFile }, 'Sending attachment')
 
-          if (req.body.vgroupid) {
+          if (body.vgroupid) {
             try {
-              var csra = await WickrIOAPI.cmdSendRoomAttachment(
-                req.body.vgroupid,
+              const csra = await WickrIOAPI.cmdSendRoomAttachment(
+                body.vgroupid,
                 userNewFile,
                 filename,
                 ttl,
@@ -366,14 +379,14 @@ async function main() {
               )
               res.send(csra)
             } catch (err) {
-              console.log({ err, vgroupid: req.body.vgroupid }, 'Error sending attachment to room')
+              console.log({ err, vgroupid: body.vgroupid }, 'Error sending attachment to room')
               return res.status(400).send('Failed to send attachment')
             }
-          } else if (req.body.users) {
-            console.log({ bodyusers: req.body.users })
-            var users = []
+          } else if (body.users) {
+            console.log({ bodyusers: body.users })
+            const users: string[] = []
             try {
-              for (let user of JSON.parse(req.body.users)) {
+              for (const user of JSON.parse(body.users) as string[]) {
                 users.push(user)
               }
             } catch (err) {
@@ -382,7 +395,7 @@ async function main() {
             }
 
             try {
-              let reply = await WickrIOAPI.cmdSend1to1Attachment(
+              const reply = await WickrIOAPI.cmdSend1to1Attachment(
                 users,
                 userNewFile,
                 filename,
@@ -399,45 +412,50 @@ async function main() {
       }
     })
 
-  app
-    .route([xapiEndpoint + '/Statistics', endpoint + '/Statistics'])
-    .get(async function (req, res) {
-      try {
-        var statistics = await WickrIOAPI.cmdGetStatistics()
-        var response = isJson(statistics)
-        if (response !== false) {
-          statistics = response
-        }
-        if (statistics.statistics) {
-          res.set('Content-Type', 'application/json')
-          res.send(statistics)
-        }
-        console.log(statistics)
-      } catch (err) {
-        console.log(err)
-        return res.status(400).type('txt').send('Failed to retrieve statistics')
+  app.route([xapiEndpoint + '/Statistics', endpoint + '/Statistics']).get(async function (
+    req: Request,
+    res: Response
+  ) {
+    try {
+      let statistics: unknown = await WickrIOAPI.cmdGetStatistics()
+      const response = isJson(statistics as string)
+      if (response !== false) {
+        statistics = response
       }
-    })
-
-  app
-    .route([xapiEndpoint + '/Statistics', endpoint + '/Statistics'])
-    .delete(async function (req, res) {
-      res.set('Content-Type', 'text/plain')
-      try {
-        var cleared = await WickrIOAPI.cmdClearStatistics()
-        console.log(cleared)
-        res.send('statistics cleared successfully')
-      } catch (err) {
-        console.log(err)
-        return res.status(400).type('txt').send('Failed to clear statistics')
+      if (typeof statistics === 'object' && statistics !== null && 'statistics' in statistics) {
+        res.set('Content-Type', 'application/json')
+        res.send(statistics)
       }
-    })
+      console.log(statistics)
+    } catch (err) {
+      console.log(err)
+      return res.status(400).type('txt').send('Failed to retrieve statistics')
+    }
+  })
 
-  app.route([xapiEndpoint + '/Rooms', endpoint + '/Rooms']).post(async function (req, res) {
+  app.route([xapiEndpoint + '/Statistics', endpoint + '/Statistics']).delete(async function (
+    req: Request,
+    res: Response
+  ) {
+    res.set('Content-Type', 'text/plain')
+    try {
+      const cleared = await WickrIOAPI.cmdClearStatistics()
+      console.log(cleared)
+      res.send('statistics cleared successfully')
+    } catch (err) {
+      console.log(err)
+      return res.status(400).type('txt').send('Failed to clear statistics')
+    }
+  })
+
+  app.route([xapiEndpoint + '/Rooms', endpoint + '/Rooms']).post(async function (
+    req: Request,
+    res: Response
+  ) {
     if (!req.body.room) {
       return res.type('txt').status(400).send('Cannot process request without a room object')
     }
-    var room = req.body.room
+    const room = req.body.room as RoomRequest
     if (!room.title || !room.description || !room.members || !room.masters) {
       return res
         .type('txt')
@@ -446,23 +464,23 @@ async function main() {
           'To Create a secure room you must at least send the following Arguments: Title, description, members and masters.'
         )
     }
-    var title = room.title
-    var description = room.description
-    var ttl = '',
+    const title = room.title
+    const description = room.description
+    let ttl = '',
       bor = ''
     if (room.ttl) ttl = room.ttl.toString()
     if (room.bor) bor = room.bor.toString()
-    var members = [],
-      masters = []
-    for (var i in room.members) {
+    const members: string[] = []
+    const masters: string[] = []
+    for (const i in room.members) {
       members.push(room.members[i].name)
     }
 
-    for (var i in room.masters) {
+    for (const i in room.masters) {
       masters.push(room.masters[i].name)
     }
     try {
-      var car = await WickrIOAPI.cmdAddRoom(members, masters, title, description, ttl, bor)
+      const car = await WickrIOAPI.cmdAddRoom(members, masters, title, description, ttl, bor)
       res.type('json').send(car)
     } catch (err) {
       console.log(err)
@@ -470,12 +488,15 @@ async function main() {
     }
   })
 
-  app.route([xapiEndpoint + '/Rooms', endpoint + '/Rooms']).get(async function (req, res) {
+  app.route([xapiEndpoint + '/Rooms', endpoint + '/Rooms']).get(async function (
+    req: Request,
+    res: Response
+  ) {
     res.set('Content-Type', 'application/json')
-    var vGroupID = req.params.vGroupID
+    const vGroupID = (req.params as Record<string, string>).vGroupID
     if (vGroupID === undefined) {
       try {
-        var cgr = await WickrIOAPI.cmdGetRooms()
+        const cgr = await WickrIOAPI.cmdGetRooms()
         res.type('json').send(cgr)
       } catch (err) {
         console.log(err)
@@ -483,7 +504,7 @@ async function main() {
       }
     } else {
       try {
-        var cgr = await WickrIOAPI.cmdGetRoom(vGroupID)
+        const cgr = await WickrIOAPI.cmdGetRoom(vGroupID)
         res.send(cgr)
       } catch (err) {
         console.log(err)
@@ -492,28 +513,29 @@ async function main() {
     }
   })
 
-  app
-    .route([xapiEndpoint + '/Rooms/:vGroupID', endpoint + '/Rooms/:vGroupID'])
-    .get(async function (req, res) {
-      res.set('Content-Type', 'application/json')
-      var vGroupID = req.params.vGroupID
-      try {
-        var cgr = await WickrIOAPI.cmdGetRoom(vGroupID)
-        res.send(cgr)
-      } catch (err) {
-        console.log(err)
-        return res.status(400).type('txt').send('Failed to retrieve room')
-      }
-    })
+  app.route([xapiEndpoint + '/Rooms/:vGroupID', endpoint + '/Rooms/:vGroupID']).get(async function (
+    req: Request,
+    res: Response
+  ) {
+    res.set('Content-Type', 'application/json')
+    const vGroupID = req.params.vGroupID as string
+    try {
+      const cgr = await WickrIOAPI.cmdGetRoom(vGroupID)
+      res.send(cgr)
+    } catch (err) {
+      console.log(err)
+      return res.status(400).type('txt').send('Failed to retrieve room')
+    }
+  })
 
   app
     .route([xapiEndpoint + '/Rooms/:vGroupID', endpoint + '/Rooms/:vGroupID'])
-    .delete(async function (req, res) {
-      var vGroupID = req.params.vGroupID
-      var reason = req.query.reason
+    .delete(async function (req: Request, res: Response) {
+      const vGroupID = req.params.vGroupID as string
+      const reason = req.query.reason as string | undefined
       if (reason === 'leave') {
         try {
-          var clr = await WickrIOAPI.cmdLeaveRoom(vGroupID)
+          const clr = await WickrIOAPI.cmdLeaveRoom(vGroupID)
           console.log('cmdLeaveRoom:', clr)
           res.send(bot_username + ' left room successfully')
         } catch (err) {
@@ -522,7 +544,7 @@ async function main() {
         }
       } else {
         try {
-          var cdr = await WickrIOAPI.cmdDeleteRoom(vGroupID)
+          const cdr = await WickrIOAPI.cmdDeleteRoom(vGroupID)
           console.log('cmdDeleteRoom:', cdr)
           res.send('Room deleted successfully')
         } catch (err) {
@@ -536,10 +558,10 @@ async function main() {
   //ModifyRoom
   app
     .route([xapiEndpoint + '/Rooms/:vGroupID', endpoint + '/Rooms/:vGroupID'])
-    .post(async function (req, res) {
-      var vGroupID = req.params.vGroupID
+    .post(async function (req: Request, res: Response) {
+      const vGroupID = req.params.vGroupID as string
       if (typeof vGroupID !== 'string') return res.send('vGroupID must be a string.')
-      var ttl = '',
+      let ttl = '',
         bor = '',
         title = '',
         description = ''
@@ -547,20 +569,20 @@ async function main() {
       if (req.body.bor) bor = req.body.bor.toString()
       if (req.body.title) title = req.body.title
       if (req.body.description) description = req.body.description
-      var members = [],
-        masters = []
+      const members: string[] = []
+      const masters: string[] = []
       if (req.body.members) {
-        for (var i in req.body.members) {
+        for (const i in req.body.members) {
           members.push(req.body.members[i].name)
         }
       }
       if (req.body.masters) {
-        for (var i in req.body.masters) {
+        for (const i in req.body.masters) {
           masters.push(req.body.masters[i].name)
         }
       }
       try {
-        var cmr = await WickrIOAPI.cmdModifyRoom(
+        const cmr = await WickrIOAPI.cmdModifyRoom(
           vGroupID,
           members,
           masters,
@@ -577,47 +599,49 @@ async function main() {
       }
     })
 
-  app
-    .route([xapiEndpoint + '/GroupConvo', endpoint + '/GroupConvo'])
-    .post(async function (req, res) {
-      var groupconvo = req.body.groupconvo
-      if (!groupconvo.members) return res.send('An array of GroupConvo members is required')
-      var ttl = '',
-        bor = ''
-      if (groupconvo.ttl) ttl = groupconvo.ttl.toString()
-      if (groupconvo.bor) bor = groupconvo.bor.toString()
-      var members = []
-      for (var i in groupconvo.members) {
-        members.push(groupconvo.members[i].name)
-      }
-      try {
-        var cagc = await WickrIOAPI.cmdAddGroupConvo(members, ttl, bor)
-        console.log(cagc)
-        res.type('json').send(cagc)
-      } catch (err) {
-        console.log(err)
-        return res.status(400).type('txt').send('Failed to create group conversation')
-      }
-    })
+  app.route([xapiEndpoint + '/GroupConvo', endpoint + '/GroupConvo']).post(async function (
+    req: Request,
+    res: Response
+  ) {
+    const groupconvo = req.body.groupconvo as GroupConvoRequest
+    if (!groupconvo.members) return res.send('An array of GroupConvo members is required')
+    let ttl = '',
+      bor = ''
+    if (groupconvo.ttl) ttl = groupconvo.ttl.toString()
+    if (groupconvo.bor) bor = groupconvo.bor.toString()
+    const members: string[] = []
+    for (const i in groupconvo.members) {
+      members.push(groupconvo.members[i].name)
+    }
+    try {
+      const cagc = await WickrIOAPI.cmdAddGroupConvo(members, ttl, bor)
+      console.log(cagc)
+      res.type('json').send(cagc)
+    } catch (err) {
+      console.log(err)
+      return res.status(400).type('txt').send('Failed to create group conversation')
+    }
+  })
 
-  app
-    .route([xapiEndpoint + '/GroupConvo', endpoint + '/GroupConvo'])
-    .get(async function (req, res) {
-      try {
-        var cggc = await WickrIOAPI.cmdGetGroupConvos()
-        res.type('json').send(cggc)
-      } catch (err) {
-        console.log(err)
-        return res.status(400).type('txt').send('Failed to retrieve group conversations')
-      }
-    })
+  app.route([xapiEndpoint + '/GroupConvo', endpoint + '/GroupConvo']).get(async function (
+    req: Request,
+    res: Response
+  ) {
+    try {
+      const cggc = await WickrIOAPI.cmdGetGroupConvos()
+      res.type('json').send(cggc)
+    } catch (err) {
+      console.log(err)
+      return res.status(400).type('txt').send('Failed to retrieve group conversations')
+    }
+  })
 
   app
     .route([xapiEndpoint + '/GroupConvo/:vGroupID', endpoint + '/GroupConvo/:vGroupID'])
-    .get(async function (req, res) {
-      var vGroupID = req.params.vGroupID
+    .get(async function (req: Request, res: Response) {
+      const vGroupID = req.params.vGroupID as string
       try {
-        var cggc = await WickrIOAPI.cmdGetGroupConvo(vGroupID)
+        const cggc = await WickrIOAPI.cmdGetGroupConvo(vGroupID)
         res.type('json').send(cggc)
       } catch (err) {
         console.log(err)
@@ -627,10 +651,10 @@ async function main() {
 
   app
     .route([xapiEndpoint + '/GroupConvo/:vGroupID', endpoint + '/GroupConvo/:vGroupID'])
-    .delete(async function (req, res) {
-      var vGroupID = req.params.vGroupID
+    .delete(async function (req: Request, res: Response) {
+      const vGroupID = req.params.vGroupID as string
       try {
-        var cdgc = WickrIOAPI.cmdDeleteGroupConvo(vGroupID)
+        const cdgc = WickrIOAPI.cmdDeleteGroupConvo(vGroupID)
         console.log(cdgc)
         res.type('txt').send(bot_username + ' has left the GroupConvo.')
       } catch (err) {
@@ -639,12 +663,15 @@ async function main() {
       }
     })
 
-  app.route([xapiEndpoint + '/Messages', endpoint + '/Messages']).get(async function (req, res) {
+  app.route([xapiEndpoint + '/Messages', endpoint + '/Messages']).get(async function (
+    req: Request,
+    res: Response
+  ) {
     let count = 1
     const maxCount = 1000
 
     if (req.query.count) {
-      count = parseInt(req.query.count)
+      count = parseInt(req.query.count as string)
       if (count > maxCount) {
         count = maxCount
       } else if (isNaN(count) || count < 1) {
@@ -655,10 +682,11 @@ async function main() {
       }
     }
 
-    var msgArray = []
-    for (var i = 0; i < count; i++) {
+    const msgArray: unknown[] = []
+    for (let i = 0; i < count; i++) {
+      let message: string
       try {
-        var message = await WickrIOAPI.cmdGetReceivedMessage()
+        message = await WickrIOAPI.cmdGetReceivedMessage()
       } catch (err) {
         console.log({ err }, 'Error calling cmdGetReceivedMessage')
         return res.status(400).type('txt').send('Failed to retrieve messages')
@@ -681,14 +709,14 @@ async function main() {
       xapiEndpoint + '/Messages/:vGroupID/:messageID',
       endpoint + '/Messages/:vGroupID/:messageID',
     ])
-    .delete(async function (req, res) {
-      var vGroupID = req.params.vGroupID
-      var msgID = req.params.messageID
+    .delete(async function (req: Request, res: Response) {
+      const vGroupID = req.params.vGroupID as string
+      const msgID = req.params.messageID as string
 
-      var doRecall = req.query.dorecall ? req.query.dorecall : 'false'
+      const doRecall = (req.query.dorecall as string) || 'false'
       if (doRecall === 'true') {
         try {
-          var cdr = await WickrIOAPI.cmdSendRecallMessage(vGroupID, msgID)
+          const cdr = await WickrIOAPI.cmdSendRecallMessage(vGroupID, msgID)
           console.log('cmdSendRecallMessage:', cdr)
           res.send('Recall message sent')
         } catch (err) {
@@ -697,7 +725,7 @@ async function main() {
         }
       } else {
         try {
-          var clr = await WickrIOAPI.cmdSendDeleteMessage(vGroupID, msgID)
+          const clr = await WickrIOAPI.cmdSendDeleteMessage(vGroupID, msgID)
           console.log('cmdSendDeleteMessage:', clr)
           res.send('Delete message sent')
         } catch (err) {
@@ -710,11 +738,11 @@ async function main() {
 
   app
     .route([xapiEndpoint + '/MsgRecvCallback', endpoint + '/MsgRecvCallback'])
-    .post(async function (req, res) {
-      var callbackUrl = req.query.callbackurl
+    .post(async function (req: Request, res: Response) {
+      const callbackUrl = req.query.callbackurl as string
       console.log('callbackUrl:', callbackUrl)
       try {
-        var csmc = await WickrIOAPI.cmdSetMsgCallback(callbackUrl)
+        const csmc = await WickrIOAPI.cmdSetMsgCallback(callbackUrl)
         console.log(csmc)
         res.type('txt').send(csmc)
       } catch (err) {
@@ -723,23 +751,24 @@ async function main() {
       }
     })
 
-  app
-    .route([xapiEndpoint + '/MsgRecvCallback', endpoint + '/MsgRecvCallback'])
-    .get(async function (req, res) {
-      try {
-        var cgmc = await WickrIOAPI.cmdGetMsgCallback() // callbabck
-        res.type('txt').send(cgmc)
-      } catch (err) {
-        console.log(err)
-        return res.status(400).type('txt').send('Failed to retrieve message callback')
-      }
-    })
+  app.route([xapiEndpoint + '/MsgRecvCallback', endpoint + '/MsgRecvCallback']).get(async function (
+    req: Request,
+    res: Response
+  ) {
+    try {
+      const cgmc = await WickrIOAPI.cmdGetMsgCallback()
+      res.type('txt').send(cgmc)
+    } catch (err) {
+      console.log(err)
+      return res.status(400).type('txt').send('Failed to retrieve message callback')
+    }
+  })
 
   app
     .route([xapiEndpoint + '/MsgRecvCallback', endpoint + '/MsgRecvCallback'])
-    .delete(async function (req, res) {
+    .delete(async function (req: Request, res: Response) {
       try {
-        var cdmc = await WickrIOAPI.cmdDeleteMsgCallback()
+        const cdmc = await WickrIOAPI.cmdDeleteMsgCallback()
         console.log(cdmc)
         res.type('txt').send(cdmc)
       } catch (err) {
@@ -748,9 +777,12 @@ async function main() {
       }
     })
 
-  app.route([xapiEndpoint + '/Directory', endpoint + '/Directory']).get(async function (req, res) {
+  app.route([xapiEndpoint + '/Directory', endpoint + '/Directory']).get(async function (
+    req: Request,
+    res: Response
+  ) {
     try {
-      var cgd = await WickrIOAPI.cmdGetDirectory()
+      const cgd = await WickrIOAPI.cmdGetDirectory()
       res.type('json').send(cgd)
     } catch (err) {
       console.log(err)
@@ -758,31 +790,32 @@ async function main() {
     }
   })
 
-  app.all('*', function (req, res) {
+  app.all('*', function (req: Request, res: Response) {
     return res.type('txt').status(404).send(`Endpoint ${req.url} not found`)
   })
 }
 
 //Basic function to validate credentials for example
-function checkCreds(authToken) {
+function checkCreds(authToken: string): boolean {
   try {
-    var valid = true
+    let valid = true
     const authStr = Buffer.from(authToken, 'base64').toString()
     //implement authToken verification in here
     if (authStr !== bot_api_auth_token) valid = false
     return valid
   } catch (err) {
     console.log(err)
+    return false
   }
 }
 
-function isJson(str) {
+function isJson(str: string): Record<string, unknown> | false {
   try {
-    str = JSON.parse(str)
+    const parsed = JSON.parse(str)
+    return parsed
   } catch (e) {
     return false
   }
-  return str
 }
 
 // Export app for testing
