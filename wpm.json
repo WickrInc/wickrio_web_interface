@@ -4,7 +4,7 @@
     "script": "./dist/web_interface.js",
     "instances": 1,
     "max_memory_restart": "128M",
-    "node_args": ["--nouse-idle-notification"],
+    "node_args": [],
     "env": {
       "NODE_ENV": "production"
     },
