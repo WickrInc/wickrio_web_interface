@@ -3,7 +3,7 @@
     "name": "WickrIO-Web-Interface-Bot",
     "script": "./dist/web_interface.js",
     "instances": 1,
-    "max_memory_restart": "128M",
+    "max_memory_restart": "1G",
     "node_args": [],
     "env": {
       "NODE_ENV": "production"
