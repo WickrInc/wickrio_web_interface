@@ -8,4 +8,5 @@ then
     tar -xvf ./node_modules.tgz
 else
     npm install --unsafe-perm
+    npm run build
 fi
