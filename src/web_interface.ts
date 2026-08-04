@@ -8,6 +8,7 @@ import multer from 'multer'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
 import morgan from 'morgan'
+import { initMetrics, recordAuthFailure, recordRequest } from './metrics'
 import { GroupConvoRequest, MessageBody, RoomRequest, Tokens, UserEntry } from './types'
 
 const app = express()
@@ -17,11 +18,13 @@ const bot = new WickrIOBotAPI.WickrIOBot()
 const userAttachmentsDir = path.join(process.cwd(), 'attachments')
 
 let WickrIOAPI = bot.apiService().WickrIOAPI
+initMetrics(WickrIOAPI)
 
 if (process.env.NODE_ENV === 'test') {
   // Inject mock API in test mode
   ;(module.exports as Record<string, unknown>).setMockAPI = (mockAPI: typeof WickrIOAPI): void => {
     WickrIOAPI = mockAPI
+    initMetrics(mockAPI)
   }
 } else {
   process.stdin.resume() //so the program will not close instantly
@@ -168,6 +171,16 @@ async function main(): Promise<void> {
     })
   )
 
+  // Record API layer metrics for every request, whichever route handles it
+  app.use(function (req: Request, res: Response, next: NextFunction) {
+    const startedAt = process.hrtime.bigint()
+    res.on('finish', () => {
+      const durationMs = Number(process.hrtime.bigint() - startedAt) / 1e6
+      recordRequest(res.statusCode, durationMs)
+    })
+    next()
+  })
+
   app.all('*', function (req: Request, res: Response, next: NextFunction) {
     const authHeader = req.get('Authorization')
     let authToken: string | undefined
@@ -179,6 +192,7 @@ async function main(): Promise<void> {
         authToken = parts[1]
       }
     } else {
+      recordAuthFailure()
       res.set('Authorization', 'Basic base64_auth_token')
       return res
         .type('txt')
@@ -188,6 +202,7 @@ async function main(): Promise<void> {
         )
     }
     if (!checkCreds(authToken!)) {
+      recordAuthFailure()
       res.set('Authorization', 'Basic base64_auth_token')
       return res.type('txt').status(401).send('Access denied: invalid basic-auth token.')
     }
@@ -201,6 +216,7 @@ async function main(): Promise<void> {
   app.use(xapiEndpoint, function (req: Request, res: Response, next: NextFunction) {
     const xapi = req.get('x-api-key')
     if (xapi != bot_api_key) {
+      recordAuthFailure()
       return res.type('txt').status(401).send('Access denied: invalid api-key.')
     }
     next()
