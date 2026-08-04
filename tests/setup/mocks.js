@@ -77,6 +77,8 @@ export const mockWickrIOAPI = {
   cmdGetMsgCallback: vi.fn().mockResolvedValue('http://example.com/callback'),
   cmdDeleteMsgCallback: vi.fn().mockResolvedValue(mockResponses.success),
   cmdGetDirectory: vi.fn().mockResolvedValue(JSON.stringify(mockResponses.directory)),
+  cmdIncrementMetric: vi.fn().mockResolvedValue(mockResponses.success),
+  cmdSetMetric: vi.fn().mockResolvedValue(mockResponses.success),
 }
 
 // Mock logger
