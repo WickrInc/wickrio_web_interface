@@ -34,12 +34,26 @@ function set(name: string, value: number): void {
   }
 }
 
+function observe(name: string, value: number): void {
+  try {
+    void api?.cmdObserveMetric(name, value).catch((err: unknown) => {
+      logger.debug('metrics: failed to observe ' + name + ': ' + String(err))
+    })
+  } catch (err) {
+    logger.debug('metrics: failed to observe ' + name + ': ' + String(err))
+  }
+}
+
 export function incrementMetric(name: string, value = 1): void {
   increment(name, value)
 }
 
 export function setMetric(name: string, value: number): void {
   set(name, value)
+}
+
+export function observeMetric(name: string, value: number): void {
+  observe(name, value)
 }
 
 export function recordRequest(statusCode: number, durationMs: number): void {
@@ -53,8 +67,9 @@ export function recordRequest(statusCode: number, durationMs: number): void {
     increment(API_RESPONSES_2XX)
   }
 
-  // Duration is a gauge, it is the latest observed value rather than a total.
-  set(API_REQUEST_DURATION_MS, Math.round(durationMs))
+  // Duration is a timer/histogram: every request is folded into a distribution
+  // (avg, min, max) over the interval rather than reporting only the last value.
+  observe(API_REQUEST_DURATION_MS, Math.round(durationMs))
 }
 
 export function recordAuthFailure(): void {
