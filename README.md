@@ -47,6 +47,7 @@ Set Message URL Callback | POST | https://\<host\>:\<port\>/WickrIO/V1/Apps/\<AP
 Get Message URL Callback | GET | https://\<host\>:\<port\>/WickrIO/V1/Apps/\<API Key\>/MsgRecvCallback
 Delete Message URL Callback | DELETE | https://\<host\>:\<port\>/WickrIO/V1/Apps/\<API Key\>/MsgRecvCallback
 Get Received Messages | GET | https://\<host\>:\<port\>/WickrIO/V1/Apps/\<API Key\>/Messages?start=\<index\>&count=\<number\>
+Delete Message | DELETE | https://\<host\>:\<port\>/WickrIO/V1/Apps/\<API Key\>/Messages/\<vGroupID\>/\<messageID\>?dorecall=\<true\|false\>
 Get Statistics | GET | https://\<host\>:\<port\>/WickrIO/V1/Apps/\<API Key\>/Statistics
 Clear Statistics | DELETE | https://\<host\>:\<port\>/WickrIO/V1/Apps/\<API Key\>/Statistics
 Create Secure Room | POST | https://\<host\>:\<port\>/WickrIO/V1/Apps/\<API Key\>/Rooms
