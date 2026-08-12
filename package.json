@@ -1,6 +1,6 @@
 {
   "name": "wickrio_web_interface",
-  "version": "6.66",
+  "version": "6.74",
   "description": "WickrIO Node.JS API Web Interface",
   "main": "dist/web_interface.js",
   "author": "Paul Cushman (pcushman@wickr.com)",
@@ -10,7 +10,7 @@
     "helmet": "^3.20.0",
     "morgan": "^1.10.1",
     "multer": "^1.4.5-lts.1",
-    "wickrio-bot-api": "7.2.0-beta.2"
+    "wickrio-bot-api": "~7.2.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
