@@ -176,10 +176,17 @@ async function main(): Promise<void> {
     const startedAt = process.hrtime.bigint()
     res.on('finish', () => {
       const durationMs = Number(process.hrtime.bigint() - startedAt) / 1e6
-      recordRequest(res.statusCode, durationMs)
+      recordRequest(res.statusCode, durationMs, res.locals.operationName as string | undefined)
     })
     next()
   })
+
+  function op(name: string) {
+    return function (_req: Request, res: Response, next: NextFunction) {
+      res.locals.operationName = name
+      next()
+    }
+  }
 
   app.all('*', function (req: Request, res: Response, next: NextFunction) {
     const authHeader = req.get('Authorization')
@@ -224,7 +231,7 @@ async function main(): Promise<void> {
 
   const upload = multer({ dest: 'attachments/' })
 
-  app.route([xapiEndpoint + '/Messages', endpoint + '/Messages']).post(async function (
+  app.route([xapiEndpoint + '/Messages', endpoint + '/Messages']).post(op('SendMessage'), async function (
     req: Request,
     res: Response
   ) {
@@ -384,7 +391,7 @@ async function main(): Promise<void> {
 
   app
     .route([xapiEndpoint + '/File', endpoint + '/File'])
-    .post(upload.single('attachment'), async function (req: Request, res: Response) {
+    .post(op('SendFile'), upload.single('attachment'), async function (req: Request, res: Response) {
       res.set('Content-Type', 'text/plain')
       res.set('Authorization', 'Basic base64_auth_token')
 
@@ -456,7 +463,7 @@ async function main(): Promise<void> {
       }
     })
 
-  app.route([xapiEndpoint + '/Statistics', endpoint + '/Statistics']).get(async function (
+  app.route([xapiEndpoint + '/Statistics', endpoint + '/Statistics']).get(op('GetStatistics'), async function (
     req: Request,
     res: Response
   ) {
@@ -477,7 +484,7 @@ async function main(): Promise<void> {
     }
   })
 
-  app.route([xapiEndpoint + '/Statistics', endpoint + '/Statistics']).delete(async function (
+  app.route([xapiEndpoint + '/Statistics', endpoint + '/Statistics']).delete(op('DeleteStatistics'), async function (
     req: Request,
     res: Response
   ) {
@@ -492,7 +499,7 @@ async function main(): Promise<void> {
     }
   })
 
-  app.route([xapiEndpoint + '/Rooms', endpoint + '/Rooms']).post(async function (
+  app.route([xapiEndpoint + '/Rooms', endpoint + '/Rooms']).post(op('CreateRoom'), async function (
     req: Request,
     res: Response
   ) {
@@ -532,7 +539,7 @@ async function main(): Promise<void> {
     }
   })
 
-  app.route([xapiEndpoint + '/Rooms', endpoint + '/Rooms']).get(async function (
+  app.route([xapiEndpoint + '/Rooms', endpoint + '/Rooms']).get(op('GetRooms'), async function (
     req: Request,
     res: Response
   ) {
@@ -557,7 +564,7 @@ async function main(): Promise<void> {
     }
   })
 
-  app.route([xapiEndpoint + '/Rooms/:vGroupID', endpoint + '/Rooms/:vGroupID']).get(async function (
+  app.route([xapiEndpoint + '/Rooms/:vGroupID', endpoint + '/Rooms/:vGroupID']).get(op('GetRoom'), async function (
     req: Request,
     res: Response
   ) {
@@ -574,7 +581,7 @@ async function main(): Promise<void> {
 
   app
     .route([xapiEndpoint + '/Rooms/:vGroupID', endpoint + '/Rooms/:vGroupID'])
-    .delete(async function (req: Request, res: Response) {
+    .delete(op('DeleteRoom'), async function (req: Request, res: Response) {
       const vGroupID = req.params.vGroupID as string
       const reason = req.query.reason as string | undefined
       if (reason === 'leave') {
@@ -602,7 +609,7 @@ async function main(): Promise<void> {
   //ModifyRoom
   app
     .route([xapiEndpoint + '/Rooms/:vGroupID', endpoint + '/Rooms/:vGroupID'])
-    .post(async function (req: Request, res: Response) {
+    .post(op('UpdateRoom'), async function (req: Request, res: Response) {
       const vGroupID = req.params.vGroupID as string
       if (typeof vGroupID !== 'string') return res.send('vGroupID must be a string.')
       let ttl = '',
@@ -643,7 +650,7 @@ async function main(): Promise<void> {
       }
     })
 
-  app.route([xapiEndpoint + '/GroupConvo', endpoint + '/GroupConvo']).post(async function (
+  app.route([xapiEndpoint + '/GroupConvo', endpoint + '/GroupConvo']).post(op('CreateGroupConvo'), async function (
     req: Request,
     res: Response
   ) {
@@ -667,7 +674,7 @@ async function main(): Promise<void> {
     }
   })
 
-  app.route([xapiEndpoint + '/GroupConvo', endpoint + '/GroupConvo']).get(async function (
+  app.route([xapiEndpoint + '/GroupConvo', endpoint + '/GroupConvo']).get(op('GetGroupConvos'), async function (
     req: Request,
     res: Response
   ) {
@@ -682,7 +689,7 @@ async function main(): Promise<void> {
 
   app
     .route([xapiEndpoint + '/GroupConvo/:vGroupID', endpoint + '/GroupConvo/:vGroupID'])
-    .get(async function (req: Request, res: Response) {
+    .get(op('GetGroupConvo'), async function (req: Request, res: Response) {
       const vGroupID = req.params.vGroupID as string
       try {
         const cggc = await WickrIOAPI.cmdGetGroupConvo(vGroupID)
@@ -695,7 +702,7 @@ async function main(): Promise<void> {
 
   app
     .route([xapiEndpoint + '/GroupConvo/:vGroupID', endpoint + '/GroupConvo/:vGroupID'])
-    .delete(async function (req: Request, res: Response) {
+    .delete(op('DeleteGroupConvo'), async function (req: Request, res: Response) {
       const vGroupID = req.params.vGroupID as string
       try {
         const cdgc = WickrIOAPI.cmdDeleteGroupConvo(vGroupID)
@@ -707,7 +714,7 @@ async function main(): Promise<void> {
       }
     })
 
-  app.route([xapiEndpoint + '/Messages', endpoint + '/Messages']).get(async function (
+  app.route([xapiEndpoint + '/Messages', endpoint + '/Messages']).get(op('GetMessages'), async function (
     req: Request,
     res: Response
   ) {
@@ -753,7 +760,7 @@ async function main(): Promise<void> {
       xapiEndpoint + '/Messages/:vGroupID/:messageID',
       endpoint + '/Messages/:vGroupID/:messageID',
     ])
-    .delete(async function (req: Request, res: Response) {
+    .delete(op('DeleteMessage'), async function (req: Request, res: Response) {
       const vGroupID = req.params.vGroupID as string
       const msgID = req.params.messageID as string
 
@@ -795,7 +802,7 @@ async function main(): Promise<void> {
 
   app
     .route([xapiEndpoint + '/MsgRecvCallback', endpoint + '/MsgRecvCallback'])
-    .post(async function (req: Request, res: Response) {
+    .post(op('SetMsgRecvCallback'), async function (req: Request, res: Response) {
       const callbackUrl = req.query.callbackurl as string
       console.log('callbackUrl:', callbackUrl)
       try {
@@ -808,7 +815,7 @@ async function main(): Promise<void> {
       }
     })
 
-  app.route([xapiEndpoint + '/MsgRecvCallback', endpoint + '/MsgRecvCallback']).get(async function (
+  app.route([xapiEndpoint + '/MsgRecvCallback', endpoint + '/MsgRecvCallback']).get(op('GetMsgRecvCallback'), async function (
     req: Request,
     res: Response
   ) {
@@ -823,7 +830,7 @@ async function main(): Promise<void> {
 
   app
     .route([xapiEndpoint + '/MsgRecvCallback', endpoint + '/MsgRecvCallback'])
-    .delete(async function (req: Request, res: Response) {
+    .delete(op('DeleteMsgRecvCallback'), async function (req: Request, res: Response) {
       try {
         const cdmc = await WickrIOAPI.cmdDeleteMsgCallback()
         console.log(cdmc)
@@ -834,7 +841,7 @@ async function main(): Promise<void> {
       }
     })
 
-  app.route([xapiEndpoint + '/Directory', endpoint + '/Directory']).get(async function (
+  app.route([xapiEndpoint + '/Directory', endpoint + '/Directory']).get(op('GetDirectory'), async function (
     req: Request,
     res: Response
   ) {
