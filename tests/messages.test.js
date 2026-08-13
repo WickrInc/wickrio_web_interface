@@ -390,4 +390,170 @@ describe('Messages API Tests', () => {
       expect(mockWickrIOAPI.cmdSendRecallMessage).toHaveBeenCalledWith('room123', 'msg456')
     })
   })
+
+  describe('POST /Messages - Status Tracking (?status=true)', () => {
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+    it('should register a status ID and return it for a 1-to-1 message', async () => {
+      const response = await request(app)
+        .post('/WickrIO/V2/Apps/Messages?status=true')
+        .set('Authorization', authHeader)
+        .set('x-api-key', apiKey)
+        .send({
+          users: [{ name: 'user1' }, { name: 'user2' }],
+          message: 'Tracked message',
+        })
+
+      expect(response.status).toBe(200)
+      expect(response.body.success).toBe(true)
+      expect(response.body.status_id).toMatch(UUID_REGEX)
+
+      const statusId = response.body.status_id
+
+      // cmdAddMessageID(messageID, sender, target, dateSent, message)
+      expect(mockWickrIOAPI.cmdAddMessageID).toHaveBeenCalledTimes(1)
+      const addArgs = mockWickrIOAPI.cmdAddMessageID.mock.calls[0]
+      expect(addArgs[0]).toBe(statusId)
+      expect(addArgs[1]).toBe('testbot') // bot username as sender
+      expect(addArgs[2]).toBe('user1,user2') // target stashes recipients
+      expect(typeof addArgs[3]).toBe('string') // dateSent
+      expect(addArgs[4]).toBe('Tracked message')
+
+      // Status ID is passed as the 5th argument (messageID) to the send call
+      expect(mockWickrIOAPI.cmdSend1to1Message).toHaveBeenCalledWith(
+        ['user1', 'user2'],
+        'Tracked message',
+        '',
+        '',
+        statusId,
+        [],
+        ''
+      )
+    })
+
+    it('should register a status ID and return it for a room message', async () => {
+      const response = await request(app)
+        .post('/WickrIO/V2/Apps/Messages?status=true')
+        .set('Authorization', authHeader)
+        .set('x-api-key', apiKey)
+        .send({
+          vgroupid: 'room123',
+          message: 'Tracked room message',
+        })
+
+      expect(response.status).toBe(200)
+      expect(response.body.success).toBe(true)
+      expect(response.body.status_id).toMatch(UUID_REGEX)
+
+      const statusId = response.body.status_id
+
+      const addArgs = mockWickrIOAPI.cmdAddMessageID.mock.calls[0]
+      expect(addArgs[0]).toBe(statusId)
+      expect(addArgs[1]).toBe('testbot')
+      expect(addArgs[2]).toBe('room123') // target stashes the vGroupID
+      expect(addArgs[4]).toBe('Tracked room message')
+
+      expect(mockWickrIOAPI.cmdSendRoomMessage).toHaveBeenCalledWith(
+        'room123',
+        'Tracked room message',
+        '',
+        '',
+        statusId,
+        [],
+        ''
+      )
+    })
+
+    it('should reject status tracking on an attachment with a 400 JSON error', async () => {
+      const response = await request(app)
+        .post('/WickrIO/V2/Apps/Messages?status=true')
+        .set('Authorization', authHeader)
+        .set('x-api-key', apiKey)
+        .send({
+          users: [{ name: 'user1' }],
+          attachment: {
+            url: 'https://example.com/file.pdf',
+            displayname: 'document.pdf',
+          },
+        })
+
+      expect(response.status).toBe(400)
+      expect(response.body.success).toBe(false)
+      expect(response.body.error.message).toContain('attachment')
+      expect(mockWickrIOAPI.cmdAddMessageID).not.toHaveBeenCalled()
+      expect(mockWickrIOAPI.cmdSend1to1Attachment).not.toHaveBeenCalled()
+    })
+
+    it('should not register a status ID when status is not requested', async () => {
+      const response = await request(app)
+        .post('/WickrIO/V2/Apps/Messages')
+        .set('Authorization', authHeader)
+        .set('x-api-key', apiKey)
+        .send({
+          users: [{ name: 'user1' }],
+          message: 'Untracked message',
+        })
+
+      expect(response.status).toBe(200)
+      expect(mockWickrIOAPI.cmdAddMessageID).not.toHaveBeenCalled()
+      // 5th argument (messageID) remains empty
+      expect(mockWickrIOAPI.cmdSend1to1Message).toHaveBeenCalledWith(
+        ['user1'],
+        'Untracked message',
+        '',
+        '',
+        '',
+        [],
+        ''
+      )
+    })
+
+    it('should not treat status values other than "true" as opt-in', async () => {
+      const response = await request(app)
+        .post('/WickrIO/V2/Apps/Messages?status=1')
+        .set('Authorization', authHeader)
+        .set('x-api-key', apiKey)
+        .send({
+          users: [{ name: 'user1' }],
+          message: 'Untracked message',
+        })
+
+      expect(response.status).toBe(200)
+      expect(mockWickrIOAPI.cmdAddMessageID).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('GET /MessageStatus/:status_id - Retrieve Message Status', () => {
+    it('should retrieve message status defaulting type to "full" (V1)', async () => {
+      const response = await request(app)
+        .get('/WickrIO/V1/Apps/test-api-key/MessageStatus/status-uuid-123')
+        .set('Authorization', authHeader)
+
+      expect(response.status).toBe(200)
+      expect(response.body).toMatchObject(mockResponses.messageStatus)
+      expect(mockWickrIOAPI.cmdGetMessageStatus).toHaveBeenCalledWith('status-uuid-123', 'full')
+    })
+
+    it('should retrieve message status (V2)', async () => {
+      const response = await request(app)
+        .get('/WickrIO/V2/Apps/MessageStatus/status-uuid-123')
+        .set('Authorization', authHeader)
+        .set('x-api-key', apiKey)
+
+      expect(response.status).toBe(200)
+      expect(mockWickrIOAPI.cmdGetMessageStatus).toHaveBeenCalledWith('status-uuid-123', 'full')
+    })
+
+    it('should return 400 when the status lookup fails', async () => {
+      mockWickrIOAPI.cmdGetMessageStatus.mockRejectedValueOnce(new Error('not found'))
+
+      const response = await request(app)
+        .get('/WickrIO/V2/Apps/MessageStatus/does-not-exist')
+        .set('Authorization', authHeader)
+        .set('x-api-key', apiKey)
+
+      expect(response.status).toBe(400)
+      expect(response.text).toContain('Failed to retrieve message status')
+    })
+  })
 })

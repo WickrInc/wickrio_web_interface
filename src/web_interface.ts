@@ -6,6 +6,7 @@ import fs from 'fs'
 import logger from './logger'
 import multer from 'multer'
 import path from 'node:path'
+import { randomUUID } from 'node:crypto'
 import morgan from 'morgan'
 import { GroupConvoRequest, MessageBody, RoomRequest, Tokens, UserEntry } from './types'
 
@@ -221,6 +222,19 @@ async function main(): Promise<void> {
     } else if (!body.message && !body.attachment) {
       return res.send('Need a message OR an attachment to send a message.')
     }
+
+    // Opt-in message status tracking via ?status=true
+    const wantsStatus = req.query.status === 'true'
+    if (wantsStatus && body.attachment) {
+      return res
+        .status(400)
+        .type('json')
+        .send({
+          success: false,
+          error: { message: 'Message status tracking cannot be applied to attachments.' },
+        })
+    }
+
     const ttl = body.ttl ? body.ttl.toString() : ''
     const bor = body.bor ? body.bor.toString() : ''
     const messagemeta = body.messagemeta ? JSON.stringify(body.messagemeta) : ''
@@ -268,16 +282,23 @@ async function main(): Promise<void> {
       } else {
         const message = body.message!
         try {
+          let messageID = ''
+          if (wantsStatus) {
+            messageID = await addMessageStatusId(users.join(','), message)
+          }
           const csm = await WickrIOAPI.cmdSend1to1Message(
             users,
             message,
             ttl,
             bor,
-            '',
+            messageID,
             [],
             messagemeta
           )
           logger.info('1to1 message sent')
+          if (wantsStatus) {
+            return res.type('json').send({ success: true, status_id: messageID })
+          }
           res.send(csm)
         } catch (err) {
           console.log(err)
@@ -319,16 +340,23 @@ async function main(): Promise<void> {
       } else {
         const message = body.message!
         try {
+          let messageID = ''
+          if (wantsStatus) {
+            messageID = await addMessageStatusId(vGroupID, message)
+          }
           const csrm = await WickrIOAPI.cmdSendRoomMessage(
             vGroupID,
             message,
             ttl,
             bor,
-            '',
+            messageID,
             [],
             messagemeta
           )
           logger.info('Room message sent')
+          if (wantsStatus) {
+            return res.type('json').send({ success: true, status_id: messageID })
+          }
           res.send(csrm)
         } catch (err) {
           console.log(err)
@@ -737,6 +765,19 @@ async function main(): Promise<void> {
     })
 
   app
+    .route([xapiEndpoint + '/MessageStatus/:status_id', endpoint + '/MessageStatus/:status_id'])
+    .get(async function (req: Request, res: Response) {
+      const statusId = req.params.status_id as string
+      try {
+        const status = await WickrIOAPI.cmdGetMessageStatus(statusId, 'full')
+        res.type('json').send(status)
+      } catch (err) {
+        console.log(err)
+        return res.status(400).type('txt').send('Failed to retrieve message status')
+      }
+    })
+
+  app
     .route([xapiEndpoint + '/MsgRecvCallback', endpoint + '/MsgRecvCallback'])
     .post(async function (req: Request, res: Response) {
       const callbackUrl = req.query.callbackurl as string
@@ -793,6 +834,21 @@ async function main(): Promise<void> {
   app.all('*', function (req: Request, res: Response) {
     return res.type('txt').status(404).send(`Endpoint ${req.url} not found`)
   })
+}
+
+//Registers a unique status/tracking ID with the engine so the message's
+//delivery status can later be queried via cmdGetMessageStatus. Returns the
+//generated status ID, which is passed as the message ID to the send calls.
+async function addMessageStatusId(target: string, message: string): Promise<string> {
+  const statusId = randomUUID()
+  await WickrIOAPI.cmdAddMessageID(
+    statusId,
+    bot_username,
+    target,
+    new Date().toISOString(),
+    message
+  )
+  return statusId
 }
 
 //Basic function to validate credentials for example

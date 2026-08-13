@@ -43,6 +43,7 @@ This section describes the REST APIs that are supported by the 2.x version of th
 API | HTTP | URL
 ----|------|-----
 Send Message | POST | https://\<host\>:\<port\>/WickrIO/V1/Apps/\<API Key\>/Messages
+Get Message Status | GET | https://\<host\>:\<port\>/WickrIO/V1/Apps/\<API Key\>/MessageStatus/\<status_id\>
 Set Message URL Callback | POST | https://\<host\>:\<port\>/WickrIO/V1/Apps/\<API Key\>/MsgRecvCallback?callbackurl=\<url\>
 Get Message URL Callback | GET | https://\<host\>:\<port\>/WickrIO/V1/Apps/\<API Key\>/MsgRecvCallback
 Delete Message URL Callback | DELETE | https://\<host\>:\<port\>/WickrIO/V1/Apps/\<API Key\>/MsgRecvCallback
@@ -63,6 +64,71 @@ Delete Group Conversation | DELETE | https://\<host\>:\<port\>/WickrIO/V1/Apps/\
 Get Directory | GET | https://\<host\>:\<port\>/WickrIO/V1/Apps/\<API Key\>/Directory
 
 The \<API Key\> value is the value you entered during the configuration of the Wickr Web Interface intagration.
+
+## Message Status Tracking
+
+The Send Message endpoint supports optional delivery-status tracking. When you add the `?status=true` query parameter to a `POST .../Messages` request, the Web Interface will:
+
+1. Generate a unique `status_id` (a UUID).
+2. Register that `status_id` with the WickrIO engine so the message's per-recipient delivery status can be tracked.
+3. Send the message, associating it with the generated `status_id`.
+4. Return the `status_id` in the response so you can query the status later.
+
+### Sending a message with status tracking
+
+Request:
+```
+POST https://<host>:<port>/WickrIO/V1/Apps/<API Key>/Messages?status=true
+
+{
+  "users": [{ "name": "alice@example.com" }],
+  "message": "Hello!"
+}
+```
+
+Successful response (`200`):
+```json
+{ "success": true, "status_id": "3f2504e0-4f89-41d3-9a0c-0305e82c3301" }
+```
+
+Notes:
+- Status tracking works for both 1-to-1 messages (`users`) and room/group messages (`vgroupid`).
+- Status tracking is **not** supported for attachments. Requesting `?status=true` together with an `attachment` returns a `400` with a JSON error body:
+  ```json
+  { "success": false, "error": { "message": "Message status tracking cannot be applied to attachments." } }
+  ```
+- Without `?status=true`, the endpoint behaves exactly as before and returns the raw engine response.
+
+### Retrieving message status
+
+Use the returned `status_id` to look up the current delivery status. The response type defaults to `full`.
+
+Request:
+```
+GET https://<host>:<port>/WickrIO/V1/Apps/<API Key>/MessageStatus/<status_id>
+```
+
+The response is the JSON status payload returned by the WickrIO engine. If the lookup fails (for example, an unknown `status_id`), a `400` is returned.
+
+Example response (`200`):
+```json
+[
+    {
+        "sent_datetime": "2026-08-13 20:47:03 UTC",
+        "message_id": "23522be0975811f1a31f07808894dd38",
+        "status": 1,
+        "status_string": "sent",
+        "user": "alice@example.com"
+    },
+    {
+        "sent_datetime": "2026-08-13 20:47:03 UTC",
+        "message_id": "23522be0975811f1a31f07808894dd38",
+        "status": 1,
+        "status_string": "sent",
+        "user": "bob@example.com"
+    }
+]
+```
 
 ## Usage:
 * For full documentation and for information on all of the endpoints and requirements visit: https://wickrinc.github.io/wickrio-docs/#web-interface-rest-api
