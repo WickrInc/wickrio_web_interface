@@ -14,9 +14,9 @@ export function initMetrics(wickrIOAPI: WickrIOAddon): void {
   api = wickrIOAPI
 }
 
-function increment(name: string, value = 1): void {
+export function incrementMetric(name: string, value = 1, dimensions?: Record<string, string>): void {
   try {
-    void api?.cmdIncrementMetric(name, value).catch((err: unknown) => {
+    void api?.cmdIncrementMetric(name, value, dimensions).catch((err: unknown) => {
       logger.debug('metrics: failed to increment ' + name + ': ' + String(err))
     })
   } catch (err) {
@@ -24,9 +24,9 @@ function increment(name: string, value = 1): void {
   }
 }
 
-function set(name: string, value: number): void {
+export function setMetric(name: string, value: number, dimensions?: Record<string, string>): void {
   try {
-    void api?.cmdSetMetric(name, value).catch((err: unknown) => {
+    void api?.cmdSetMetric(name, value, dimensions).catch((err: unknown) => {
       logger.debug('metrics: failed to set ' + name + ': ' + String(err))
     })
   } catch (err) {
@@ -34,9 +34,9 @@ function set(name: string, value: number): void {
   }
 }
 
-function observe(name: string, value: number): void {
+export function observeMetric(name: string, value: number, dimensions?: Record<string, string>): void {
   try {
-    void api?.cmdObserveMetric(name, value).catch((err: unknown) => {
+    void api?.cmdObserveMetric(name, value, dimensions).catch((err: unknown) => {
       logger.debug('metrics: failed to observe ' + name + ': ' + String(err))
     })
   } catch (err) {
@@ -44,34 +44,28 @@ function observe(name: string, value: number): void {
   }
 }
 
-export function incrementMetric(name: string, value = 1): void {
-  increment(name, value)
-}
+export function recordRequest(statusCode: number, durationMs: number, operation?: string): void {
+  const dims = operation ? { Operation: operation } : undefined
 
-export function setMetric(name: string, value: number): void {
-  set(name, value)
-}
-
-export function observeMetric(name: string, value: number): void {
-  observe(name, value)
-}
-
-export function recordRequest(statusCode: number, durationMs: number): void {
-  increment(API_REQUESTS)
+  incrementMetric(API_REQUESTS)
+  if (dims) incrementMetric(API_REQUESTS, 1, dims)
 
   if (statusCode >= 500) {
-    increment(API_RESPONSES_5XX)
+    incrementMetric(API_RESPONSES_5XX)
+    if (dims) incrementMetric(API_RESPONSES_5XX, 1, dims)
   } else if (statusCode >= 400) {
-    increment(API_RESPONSES_4XX)
+    incrementMetric(API_RESPONSES_4XX)
+    if (dims) incrementMetric(API_RESPONSES_4XX, 1, dims)
   } else if (statusCode >= 200 && statusCode < 300) {
-    increment(API_RESPONSES_2XX)
+    incrementMetric(API_RESPONSES_2XX)
+    if (dims) incrementMetric(API_RESPONSES_2XX, 1, dims)
   }
 
-  // Duration is a timer/histogram: every request is folded into a distribution
-  // (avg, min, max) over the interval rather than reporting only the last value.
-  observe(API_REQUEST_DURATION_MS, Math.round(durationMs))
+  const rounded = Math.round(durationMs)
+  observeMetric(API_REQUEST_DURATION_MS, rounded)
+  if (dims) observeMetric(API_REQUEST_DURATION_MS, rounded, dims)
 }
 
 export function recordAuthFailure(): void {
-  increment(API_AUTH_FAILURES)
+  incrementMetric(API_AUTH_FAILURES)
 }
