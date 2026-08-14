@@ -46,6 +46,14 @@ export const mockResponses = {
   directory: {
     users: [{ name: 'user1' }, { name: 'user2' }, { name: 'user3' }],
   },
+  messageStatus: {
+    message_id: 'status-uuid-123',
+    type: 'full',
+    statuses: [
+      { user: 'user1', status: 'delivered' },
+      { user: 'user2', status: 'read' },
+    ],
+  },
 }
 
 // Create mock WickrIOAPI
@@ -77,6 +85,8 @@ export const mockWickrIOAPI = {
   cmdGetMsgCallback: vi.fn().mockResolvedValue('http://example.com/callback'),
   cmdDeleteMsgCallback: vi.fn().mockResolvedValue(mockResponses.success),
   cmdGetDirectory: vi.fn().mockResolvedValue(JSON.stringify(mockResponses.directory)),
+  cmdAddMessageID: vi.fn().mockResolvedValue(mockResponses.success),
+  cmdGetMessageStatus: vi.fn().mockResolvedValue(JSON.stringify(mockResponses.messageStatus)),
 }
 
 // Mock logger
