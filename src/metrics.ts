@@ -14,7 +14,11 @@ export function initMetrics(wickrIOAPI: WickrIOAddon): void {
   api = wickrIOAPI
 }
 
-export function incrementMetric(name: string, value = 1, dimensions?: Record<string, string>): void {
+export function incrementMetric(
+  name: string,
+  value = 1,
+  dimensions?: Record<string, string>
+): void {
   try {
     void api?.cmdIncrementMetric(name, value, dimensions).catch((err: unknown) => {
       logger.debug('metrics: failed to increment ' + name + ': ' + String(err))
@@ -34,7 +38,11 @@ export function setMetric(name: string, value: number, dimensions?: Record<strin
   }
 }
 
-export function observeMetric(name: string, value: number, dimensions?: Record<string, string>): void {
+export function observeMetric(
+  name: string,
+  value: number,
+  dimensions?: Record<string, string>
+): void {
   try {
     void api?.cmdObserveMetric(name, value, dimensions).catch((err: unknown) => {
       logger.debug('metrics: failed to observe ' + name + ': ' + String(err))
