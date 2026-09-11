@@ -408,24 +408,17 @@ async function main(): Promise<void> {
             console.log('attachment is not defined!')
             return res.status(400).send('No attachment included in request')
           } else {
-            // multer/busboy should provide only the basename of the file, but call
-            // path.basename again to be certain there's no chance of path traversal
+            // Send the file from multer's unique, randomly-named staging path
+            // otherwise can cause name collision race condition
             const filename = path.basename(req.file.originalname)
-            const userNewFile = path.join(userAttachmentsDir, filename)
             const inFile = path.join(userAttachmentsDir, req.file.filename)
-
-            if (fs.existsSync(userNewFile)) {
-              fs.unlinkSync(userNewFile)
-            }
-
-            fs.renameSync(inFile, userNewFile)
-            console.log({ inFile, userNewFile }, 'Sending attachment')
+            console.log({ inFile }, 'Sending attachment')
 
             if (body.vgroupid) {
               try {
                 const csra = await WickrIOAPI.cmdSendRoomAttachment(
                   body.vgroupid,
-                  userNewFile,
+                  inFile,
                   filename,
                   ttl,
                   bor
@@ -450,7 +443,7 @@ async function main(): Promise<void> {
               try {
                 const reply = await WickrIOAPI.cmdSend1to1Attachment(
                   users,
-                  userNewFile,
+                  inFile,
                   filename,
                   ttl,
                   bor
